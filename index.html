@@ -1,0 +1,2882 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f1117">
+<title>Gemini Agent Pro — Final</title>
+<style>
+:root{--bg:#0f1117;--s:#1a1d27;--s2:#242833;--bd:#2d3341;--tx:#e8eaed;--tx2:#9aa0ab;--tx3:#6b7280;--ac:#4a8dff;--ac-s:rgba(74,141,255,.12);--ag:#a78bfa;--ok:#34d399;--wn:#fbbf24;--dg:#f87171;--dg-s:rgba(248,113,113,.12);--fn:"Inter",system-ui,-apple-system,"Vazirmatn",sans-serif;--mn:ui-monospace,Menlo,monospace;--sb:env(safe-area-inset-bottom,0px);--st:env(safe-area-inset-top,0px);--code:#f59e0b;--code-s:rgba(245,158,11,.12);--mcp:#06b6d4;--mcp-s:rgba(6,182,212,.12);--agent:#ec4899;--agent-s:rgba(236,72,153,.12);--img:#8b5cf6;--img-s:rgba(139,92,246,.12);--sandbox:#10b981;--sandbox-s:rgba(16,185,129,.12)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:var(--fn);font-size:15px;background:var(--bg);color:var(--tx);height:100dvh;display:flex;flex-direction:column;overflow:hidden;line-height:1.6}
+button{font-family:inherit;color:inherit;border:0;background:none;cursor:pointer}
+input,textarea,select{font-family:inherit;color:inherit}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
+.hdr{padding:calc(10px + var(--st)) 14px 10px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--bd);background:var(--s);flex-shrink:0;z-index:10;overflow-x:auto;scrollbar-width:none}
+.hdr::-webkit-scrollbar{display:none}
+.hdr .logo{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--ac),var(--ag));display:grid;place-items:center;font-weight:700;font-size:13px;color:#fff;flex-shrink:0}
+.hdr .title{font-weight:650;font-size:14px;flex:1;min-width:0}
+.hdr .title small{display:block;font-size:10.5px;color:var(--tx3);font-weight:500;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdr .st{font-size:10px;color:var(--tx3);display:flex;align-items:center;gap:4px;padding:3px 8px;border-radius:99px;background:var(--s2);font-weight:600;flex-shrink:0}
+.hdr .st .dot{width:6px;height:6px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 2px rgba(52,211,153,.25)}
+.hdr .st.off .dot{background:var(--dg);box-shadow:0 0 0 2px var(--dg-s)}
+.hdr .st.pm .dot{background:var(--ag);box-shadow:0 0 0 2px rgba(167,139,250,.25)}
+.hdr .st.mem .dot{background:var(--ac);box-shadow:0 0 0 2px rgba(74,141,255,.25)}
+.hdr .st.code .dot{background:var(--code);box-shadow:0 0 0 2px var(--code-s)}
+.hdr .st.mcp .dot{background:var(--mcp);box-shadow:0 0 0 2px var(--mcp-s)}
+.hdr .st.agent .dot{background:var(--agent);box-shadow:0 0 0 2px var(--agent-s)}
+.hdr .st.img .dot{background:var(--img);box-shadow:0 0 0 2px var(--img-s)}
+.hdr .st.sandbox .dot{background:var(--sandbox);box-shadow:0 0 0 2px var(--sandbox-s)}
+.hdr .btn{width:32px;height:32px;border-radius:50%;flex-shrink:0;background:var(--s2);color:var(--tx2);display:grid;place-items:center;transition:all .12s}
+.hdr .btn:hover{background:var(--bd);color:var(--tx)}
+.hdr .btn svg{width:15px;height:15px;stroke-width:1.9}
+.hdr .btn.active{background:var(--ag);color:#fff}
+.hdr .btn.active-code{background:var(--code);color:#fff}
+.hdr .btn.active-mcp{background:var(--mcp);color:#fff}
+.hdr .btn.active-agent{background:var(--agent);color:#fff}
+.hdr .btn.active-img{background:var(--img);color:#fff}
+.hdr .btn.active-sandbox{background:var(--sandbox);color:#fff}
+.stream{flex:1;overflow-y:auto;padding:14px 14px 110px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}
+.wlc{margin:auto;text-align:center;max-width:460px}
+.wlc .mark{width:56px;height:56px;border-radius:16px;margin:0 auto 14px;background:linear-gradient(135deg,var(--ac),var(--ag));display:grid;place-items:center;color:#fff;box-shadow:0 8px 24px var(--ac-s)}
+.wlc h1{font-size:22px;font-weight:650;margin-bottom:6px}
+.wlc p{font-size:13px;color:var(--tx2);margin-bottom:20px}
+.sug{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:480px){.sug{grid-template-columns:1fr}}
+.sug button{padding:10px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--s);color:var(--tx);font-size:12.5px;text-align:start;transition:all .12s;line-height:1.5}
+.sug button:hover{background:var(--s2);border-color:var(--ac)}
+.sug button strong{display:block;font-size:10px;color:var(--ac);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px;font-weight:700}
+.msg{display:flex;animation:enter .2s ease}
+@keyframes enter{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.msg-u{justify-content:flex-end}
+.msg-u .bub{max-width:85%;padding:9px 13px;border-radius:15px 15px 4px 15px;background:linear-gradient(135deg,#1e3a5f,#1a2f4d);color:#f4f7fb;font-size:14px;white-space:pre-wrap;word-break:break-word;border:1px solid rgba(255,255,255,.08)}
+.box{background:var(--s);border:1px solid var(--bd);border-radius:12px;padding:12px;margin:4px 0;animation:enter .2s ease}
+.box.pm{border-color:var(--ag);background:linear-gradient(135deg,rgba(167,139,250,.08),var(--s))}
+.box.mem{border-color:var(--ac);background:linear-gradient(135deg,rgba(74,141,255,.06),var(--s))}
+.box.code{border-color:var(--code);background:linear-gradient(135deg,rgba(245,158,11,.06),var(--s))}
+.box.mcp{border-color:var(--mcp);background:linear-gradient(135deg,rgba(6,182,212,.06),var(--s))}
+.box.agent{border-color:var(--agent);background:linear-gradient(135deg,rgba(236,72,153,.06),var(--s))}
+.box.img{border-color:var(--img);background:linear-gradient(135deg,rgba(139,92,246,.06),var(--s))}
+.box.sandbox{border-color:var(--sandbox);background:linear-gradient(135deg,rgba(16,185,129,.06),var(--s))}
+.box .head{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px;font-weight:650;color:var(--ag);flex-wrap:wrap}
+.box.mem .head{color:var(--ac)}
+.box.code .head{color:var(--code)}
+.box.mcp .head{color:var(--mcp)}
+.box.agent .head{color:var(--agent)}
+.box.img .head{color:var(--img)}
+.box.sandbox .head{color:var(--sandbox)}
+.box .head .badge{padding:2px 8px;border-radius:99px;background:rgba(167,139,250,.12);color:var(--ag);font-size:9px;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.box.mem .head .badge{background:rgba(74,141,255,.12);color:var(--ac)}
+.box.code .head .badge{background:var(--code-s);color:var(--code)}
+.box.mcp .head .badge{background:var(--mcp-s);color:var(--mcp)}
+.box.agent .head .badge{background:var(--agent-s);color:var(--agent)}
+.box.img .head .badge{background:var(--img-s);color:var(--img)}
+.box.sandbox .head .badge{background:var(--sandbox-s);color:var(--sandbox)}
+.step{display:flex;gap:10px;padding:7px 9px;border-radius:8px;background:var(--s2);margin-bottom:5px;font-size:12.5px;animation:enter .15s ease}
+.step:last-child{margin-bottom:0}
+.step .ico{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11px;flex-shrink:0}
+.step .ico.t{background:rgba(167,139,250,.12);color:var(--ag)}
+.step .ico.tl{background:rgba(16,185,129,.12);color:var(--ok)}
+.step .ico.r{background:rgba(59,130,246,.12);color:#60a5fa}
+.step .ico.f{background:rgba(251,191,36,.12);color:var(--wn)}
+.step .ico.e{background:var(--dg-s);color:var(--dg)}
+.step .ico.py{background:rgba(52,211,153,.15);color:#34d399}
+.step .ico.term{background:rgba(248,113,113,.15);color:#f87171}
+.step .ico.pm{background:linear-gradient(135deg,rgba(167,139,250,.2),rgba(74,141,255,.2));color:var(--ag)}
+.step .ico.agent{background:rgba(74,141,255,.15);color:var(--ac)}
+.step .ico.mem{background:rgba(74,141,255,.15);color:var(--ac)}
+.step .ico.code{background:var(--code-s);color:var(--code)}
+.step .ico.mcp{background:var(--mcp-s);color:var(--mcp)}
+.step .ico.install{background:linear-gradient(135deg,rgba(16,185,129,.2),rgba(52,211,153,.2));color:var(--ok)}
+.step .ico.thoughtsig{background:linear-gradient(135deg,rgba(236,72,153,.2),rgba(167,139,250,.2));color:var(--agent)}
+.step .ico.img{background:var(--img-s);color:var(--img)}
+.step .ico.batch{background:linear-gradient(135deg,rgba(139,92,246,.2),rgba(74,141,255,.2));color:var(--img)}
+.step .ico.sandbox{background:var(--sandbox-s);color:var(--sandbox)}
+.step .txt{flex:1;min-width:0;word-break:break-word;line-height:1.5}
+.step .txt pre{margin-top:6px;padding:8px;background:var(--bg);border-radius:6px;font-family:var(--mn);font-size:11px;overflow-x:auto;direction:ltr;text-align:left;white-space:pre-wrap;max-height:200px;overflow-y:auto}
+.out{margin-top:10px;padding:12px;border-radius:10px;background:var(--s2);border-right:3px solid var(--ag);font-size:14px;line-height:1.65}
+.out p{margin:0 0 8px}.out p:last-child{margin-bottom:0}
+.out pre{background:var(--bg);padding:10px;border-radius:6px;font-family:var(--mn);font-size:12px;overflow-x:auto;direction:ltr;text-align:left;margin:8px 0}
+.out code{font-family:var(--mn);font-size:.87em;background:var(--bg);border:1px solid var(--bd);border-radius:4px;padding:1px 5px}
+.out img{max-width:100%;border-radius:10px;margin-top:8px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.out audio{width:100%;margin-top:8px}
+.meta{font-size:10px;color:var(--tx3);margin-top:8px;text-align:end;font-variant-numeric:tabular-nums}
+.err .ebox{padding:10px 14px;border-radius:10px;background:var(--dg-s);border:1px solid rgba(248,113,113,.25);color:var(--dg);font-size:12.5px;display:flex;gap:8px;align-items:flex-start;word-break:break-word}
+.err .ebox svg{flex-shrink:0;margin-top:2px}
+.comp{position:fixed;bottom:0;left:0;right:0;padding:8px 14px calc(10px + var(--sb));background:linear-gradient(to top,var(--bg) 60%,transparent);z-index:20}
+.comp .box2{display:flex;align-items:flex-end;gap:6px;background:var(--s);border:1px solid var(--bd);border-radius:16px;padding:6px 6px 6px 14px;transition:border-color .15s,box-shadow .15s}
+.comp .box2:focus-within{border-color:var(--ac);box-shadow:0 0 0 3px var(--ac-s)}
+.comp textarea{flex:1;border:0;background:none;resize:none;outline:none;font-family:inherit;font-size:14.5px;color:var(--tx);max-height:110px;min-height:24px;padding:6px 0;line-height:1.5}
+.comp textarea::placeholder{color:var(--tx3)}
+.sbtn{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:grid;place-items:center;transition:all .15s}
+.sbtn.mic{background:var(--s2);color:var(--tx2)}
+.sbtn.go{background:var(--ac);color:#fff;box-shadow:0 2px 8px var(--ac-s)}
+.sbtn.stop{background:var(--dg-s);color:var(--dg)}
+.sbtn.recording{background:var(--dg);color:#fff;animation:pulse 1.2s infinite}
+.sbtn.pm-go{background:linear-gradient(135deg,var(--ag),var(--ac));color:#fff}
+.sbtn.code-go{background:linear-gradient(135deg,var(--code),#f472b6);color:#fff}
+.sbtn.mcp-go{background:linear-gradient(135deg,var(--mcp),var(--ac));color:#fff}
+.sbtn.agent-go{background:linear-gradient(135deg,var(--agent),var(--ag));color:#fff}
+.sbtn.img-go{background:linear-gradient(135deg,var(--img),var(--ac));color:#fff}
+.sbtn.sandbox-go{background:linear-gradient(135deg,var(--sandbox),var(--ac));color:#fff}
+.sbtn svg{width:16px;height:16px;stroke-width:2.1}
+.sbtn.upload{background:var(--s2);color:var(--tx2)}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .22s;z-index:90}
+.scrim.open{opacity:1;pointer-events:auto}
+.modal{position:fixed;top:0;bottom:0;left:0;right:0;max-width:620px;margin:auto;background:var(--s);border:1px solid var(--bd);border-radius:20px;box-shadow:0 24px 80px rgba(0,0,0,.5);display:flex;flex-direction:column;transform:scale(.95) translateY(10px);opacity:0;pointer-events:none;transition:all .26s cubic-bezier(.32,.72,0,1);z-index:91;max-height:92dvh;margin-top:max(0px,calc(50dvh - 50%))}
+.modal.open{transform:scale(1) translateY(0);opacity:1;pointer-events:auto}
+.mh{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid var(--bd);flex-shrink:0}
+.mh h2{font-size:16px;font-weight:650;display:flex;align-items:center;gap:8px}
+.mh .cb{width:30px;height:30px;border-radius:50%;color:var(--tx2);display:grid;place-items:center}
+.mh .cb:hover{background:var(--s2);color:var(--tx)}
+.mh .cb svg{width:15px;height:15px;stroke-width:2.2}
+.mb{padding:14px 18px;overflow-y:auto;flex:1;min-height:0}
+.mf{display:flex;gap:8px;padding:12px 18px calc(14px + var(--sb));border-top:1px solid var(--bd);flex-shrink:0}
+.mf button{flex:1;padding:11px;border-radius:10px;font-size:13px;font-weight:650;transition:all .12s}
+.mf .bp{background:var(--ac);color:#fff}
+.mf .bs{background:var(--s2);color:var(--tx);border:1px solid var(--bd)}
+.fld{margin-bottom:14px}.fld:last-child{margin-bottom:0}
+.fld label{display:block;font-size:12px;font-weight:650;color:var(--tx);margin-bottom:5px}
+.fld .hint{font-size:11px;color:var(--tx3);margin-top:4px;line-height:1.45}
+.fld input,.fld textarea,.fld select{width:100%;padding:9px 11px;border:1px solid var(--bd);border-radius:10px;background:var(--s2);font-size:13px;line-height:1.5;color:var(--tx);outline:none;transition:border-color .12s,box-shadow .12s}
+.fld input:focus,.fld textarea:focus,.fld select:focus{border-color:var(--ac);box-shadow:0 0 0 3px var(--ac-s);background:var(--s)}
+.fld textarea{resize:vertical;min-height:60px}
+.fld select{-webkit-appearance:none;appearance:none;cursor:pointer;padding-left:32px}
+.sw{position:relative}.sw::after{content:"";position:absolute;left:10px;top:50%;transform:translateY(-50%);width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid var(--tx3);pointer-events:none}
+.srow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 11px;background:var(--s2);border-radius:10px;border:1px solid var(--bd)}
+.srow .txt{flex:1;min-width:0}.srow .txt .t{font-size:12.5px;font-weight:650}
+.srow .txt .d{font-size:11px;color:var(--tx3);margin-top:2px;line-height:1.4}
+.tog{position:relative;width:42px;height:24px;border-radius:99px;background:var(--bd);flex-shrink:0;transition:background .2s;padding:0}
+.tog::after{content:"";position:absolute;top:3px;right:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:transform .2s cubic-bezier(.32,.72,0,1)}
+.tog.on{background:var(--ac)}.tog.on::after{transform:translateX(-18px)}
+.tog.on.code{background:var(--code)}
+.tog.on.mcp{background:var(--mcp)}
+.tog.on.agent{background:var(--agent)}
+.tog.on.img{background:var(--img)}
+.tog.on.sandbox{background:var(--sandbox)}
+.note{padding:9px 11px;background:var(--ac-s);border-radius:10px;font-size:11px;color:var(--ac);line-height:1.55;border-right:3px solid var(--ac)}
+.note.warn{background:rgba(251,191,36,.1);color:var(--wn);border-right-color:var(--wn)}
+.note.ok{background:rgba(52,211,153,.1);color:var(--ok);border-right-color:var(--ok)}
+.note.pm{background:rgba(167,139,250,.1);color:var(--ag);border-right-color:var(--ag)}
+.note.code{background:var(--code-s);color:var(--code);border-right-color:var(--code)}
+.note.mcp{background:var(--mcp-s);color:var(--mcp);border-right-color:var(--mcp)}
+.note.agent{background:var(--agent-s);color:var(--agent);border-right-color:var(--agent)}
+.note.img{background:var(--img-s);color:var(--img);border-right-color:var(--img)}
+.note.sandbox{background:var(--sandbox-s);color:var(--sandbox);border-right-color:var(--sandbox)}
+.note code{font-family:var(--mn);font-size:10px;background:rgba(0,0,0,.2);padding:1px 5px;border-radius:3px}
+.tgrid{display:flex;flex-direction:column;gap:5px}
+.titem{display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;cursor:pointer;transition:all .12s}
+.titem:hover{border-color:var(--ac)}.titem.on{border-color:var(--ac);background:var(--ac-s)}
+.titem .ti{flex:1;min-width:0}.titem .tn{font-size:12.5px;font-weight:650}
+.titem .td{font-size:10.5px;color:var(--tx3);margin-top:2px;line-height:1.4}
+.titem .chk{width:20px;height:20px;border-radius:50%;background:var(--bd);color:transparent;display:grid;place-items:center;flex-shrink:0;transition:all .15s}
+.titem.on .chk{background:var(--ac);color:#fff}
+.titem.on.code .chk{background:var(--code)}
+.titem.on.mcp .chk{background:var(--mcp)}
+.titem.on.agent .chk{background:var(--agent)}
+.titem.on.img .chk{background:var(--img)}
+.titem.on.sandbox .chk{background:var(--sandbox)}
+.titem .chk svg{width:11px;height:11px;stroke-width:3}
+.dlbtn{display:flex;align-items:center;gap:8px;padding:10px 14px;background:linear-gradient(135deg,var(--ac),var(--ag));color:#fff;border-radius:10px;font-size:13px;font-weight:650;transition:all .15s;border:0;cursor:pointer;width:100%;justify-content:center}
+.dlbtn svg{width:16px;height:16px;stroke-width:2.2}
+.dlbtn.code{background:linear-gradient(135deg,var(--code),#f472b6)}
+.dash{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin:8px 0}
+.card{padding:10px 12px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;text-align:center}
+.card .lbl{font-size:9px;font-weight:700;color:var(--tx3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.card .val{font-size:16px;font-weight:700;color:var(--ac);font-variant-numeric:tabular-nums}
+.card .val.ag{color:var(--ag)}.card .val.ok{color:var(--ok)}.card .val.wn{color:var(--wn)}.card .val.dg{color:var(--dg)}
+.card .val.code{color:var(--code)}.card .val.mcp{color:var(--mcp)}.card .val.agent{color:var(--agent)}.card .val.img{color:var(--img)}.card .val.sandbox{color:var(--sandbox)}
+.mcp-item{padding:10px 12px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;margin-bottom:6px}
+.mcp-item .mcp-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.mcp-item .mcp-name{flex:1;font-weight:650;font-size:13px}
+.mcp-item .mcp-type{font-size:9px;padding:2px 6px;border-radius:4px;background:var(--mcp-s);color:var(--mcp);font-weight:700;text-transform:uppercase}
+.mcp-item .mcp-desc{font-size:11.5px;color:var(--tx3);line-height:1.5}
+.mcp-item .mcp-actions{display:flex;gap:6px;margin-top:8px}
+.mcp-item .mcp-actions button{padding:5px 10px;border-radius:6px;font-size:11px;font-weight:600;background:var(--s);border:1px solid var(--bd);color:var(--tx2)}
+.mcp-item .mcp-actions button.primary{background:var(--mcp);color:#fff;border-color:var(--mcp)}
+.mcp-item .mcp-actions button.danger{background:var(--dg-s);color:var(--dg);border-color:transparent}
+.code-view{background:#0a0a0a;border:1px solid var(--bd);border-radius:12px;padding:14px;font-family:var(--mn);font-size:11px;line-height:1.5;color:#e8eaed;white-space:pre;overflow:auto;direction:ltr;text-align:left;max-height:400px}
+.copy-bar{display:flex;gap:6px;margin-bottom:8px}
+.copy-bar button{flex:1;padding:8px;border-radius:8px;font-size:12px;font-weight:650;background:var(--s2);border:1px solid var(--bd);color:var(--tx2)}
+.copy-bar button.primary{background:var(--ac);color:#fff;border-color:var(--ac)}
+.tab-bar{display:flex;gap:4px;margin-bottom:10px;overflow-x:auto;scrollbar-width:none}
+.tab-bar::-webkit-scrollbar{display:none}
+.tab-bar button{padding:6px 12px;border-radius:8px;font-size:11.5px;font-weight:650;background:var(--s2);border:1px solid var(--bd);color:var(--tx2);white-space:nowrap;flex-shrink:0}
+.tab-bar button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.toast{position:fixed;bottom:calc(90px + var(--sb));left:50%;transform:translateX(-50%) translateY(10px) scale(.95);background:var(--tx);color:var(--bg);padding:8px 16px;border-radius:99px;font-size:12px;font-weight:650;opacity:0;pointer-events:none;transition:all .22s;z-index:200;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:84vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+.toast.err{background:var(--dg);color:#fff}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="logo">G</div>
+  <div class="title">Gemini Agent Pro<small id="mName">gemini-3.8-flash</small></div>
+  <div class="st" id="conn"><span class="dot"></span><span id="connT">آماده</span></div>
+  <button class="btn" id="sandboxBtn" title="سندباکس Gemini"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><path d="M7 8l3 3-3 3"/><path d="M13 14h4"/></svg></button>
+  <button class="btn" id="mcpBtn" title="MCP"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></button>
+  <button class="btn" id="codeBtn" title="کد"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg></button>
+  <button class="btn" id="memBtn" title="حافظه"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/></svg></button>
+  <button class="btn" id="agentBtn" title="Agentic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></button>
+  <button class="btn" id="imgBtn" title="مدیا"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
+  <button class="btn" id="pmBtn" title="مدیر پروژه"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></button>
+  <button class="btn" id="dbgBtn" title="Debug"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></button>
+  <button class="btn" id="pysBtn" title="Python Server"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+  <button class="btn" id="setBtn" title="تنظیمات"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+</header>
+
+<main class="stream" id="stream"></main>
+
+<div class="comp">
+  <div class="box2">
+    <button class="sbtn upload" id="uploadBtn" title="آپلود فایل"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></button>
+    <textarea id="input" rows="1" placeholder="یک کار بدهید..." autocomplete="off"></textarea>
+    <button class="sbtn mic" id="actBtn">
+      <svg class="i-m" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+      <svg class="i-s" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" style="display:none"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg>
+      <svg class="i-st" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="7" y="7" width="10" height="10" rx="2"/></svg>
+    </button>
+  </div>
+</div>
+<input type="file" id="fileUpload" hidden accept="image/*,audio/*,video/*,.pdf,.txt">
+
+<div class="scrim" id="scrim"></div>
+<div class="modal" id="modal">
+  <div class="mh"><h2>⚙️ تنظیمات</h2><button class="cb" id="mClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+  <div class="mb">
+    <div class="tab-bar" id="setTabs">
+      <button class="on" data-tab="api">API</button>
+      <button data-tab="sandbox">سندباکس</button>
+      <button data-tab="agentic">Agentic</button>
+      <button data-tab="memory">حافظه</button>
+      <button data-tab="code">کد</button>
+      <button data-tab="media">مدیا</button>
+      <button data-tab="pm">PM</button>
+      <button data-tab="safety">امنیت</button>
+      <button data-tab="tools">ابزارها</button>
+    </div>
+    <div id="setContent"></div>
+    <div class="note pm" id="sStatus">در حال بارگذاری...</div>
+  </div>
+  <div class="mf"><button class="bs" id="mReset">بازنشانی</button><button class="bp" id="mSave">ذخیره</button></div>
+</div>
+
+<div class="scrim" id="memScrim"></div>
+<div class="modal" id="memModal">
+  <div class="mh"><h2>🧠 حافظه</h2><button class="cb" id="memClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+  <div class="mb" id="memBody"></div>
+  <div class="mf"><button class="bs" id="memClear">پاک کردن LTM</button></div>
+</div>
+
+<div class="scrim" id="codeScrim"></div>
+<div class="modal" id="codeModal">
+  <div class="mh"><h2>🏗️ ایندکس کد</h2><button class="cb" id="codeClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+  <div class="mb" id="codeBody"></div>
+  <div class="mf"><button class="bs" id="codeClear">پاک کردن</button></div>
+</div>
+
+<div class="scrim" id="mcpScrim"></div>
+<div class="modal" id="mcpModal">
+  <div class="mh"><h2>🔌 MCP Servers</h2><button class="cb" id="mcpClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+  <div class="mb" id="mcpBody"></div>
+  <div class="mf"><button class="bs" id="mcpDiscover">کشف ابزارها</button></div>
+</div>
+
+<div class="scrim" id="agentScrim"></div>
+<div class="modal" id="agentModal">
+  <div class="mh"><h2>🤖 Agentic</h2><button class="cb" id="agentClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+  <div class="mb" id="agentBody"></div>
+  <div class="mf"><button class="bs" id="agentClear">Clear</button><button class="bp" id="agentExport">Export</button></div>
+</div>
+
+<div class="scrim" id="imgScrim"></div>
+<div class="modal" id="imgModal">
+  <div class="mh"><h2>🎨 مدیا</h2><button class="cb" id="imgClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+  <div class="mb" id="imgBody"></div>
+  <div class="mf"><button class="bs" id="imgClear">پاک کردن</button></div>
+</div>
+
+<div class="scrim" id="dbgScrim"></div>
+<div class="modal" id="dbgModal">
+  <div class="mh"><h2>🐛 Debug</h2><button class="cb" id="dbgClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+  <div class="mb" id="dbgBody"></div>
+  <div class="mf"><button class="bs" id="dbgClear">پاک کردن</button><button class="bp" id="dbgExport">دانلود</button></div>
+</div>
+
+<div class="scrim" id="pysScrim"></div>
+<div class="modal" id="pysModal">
+  <div class="mh"><h2>🐍 سرور پایتون</h2><button class="cb" id="pysClose"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button></div>
+  <div class="mb">
+    <div class="note ok" style="margin-bottom:12px">
+      <strong>نصب:</strong><br>
+      1. دانلود agent_server.py<br>
+      2. <code>pip install fastapi "uvicorn[standard]" pydantic httpx cryptography python-telegram-bot google-genai</code><br>
+      3. <code>python agent_server.py</code><br>
+      4. توکن را در تنظیمات → API وارد کنید
+    </div>
+    <div class="copy-bar">
+      <button class="primary" id="pysDownload">📥 دانلود agent_server.py</button>
+      <button id="pysCopy">📋 کپی</button>
+    </div>
+    <div class="code-view" id="pysCodeView"></div>
+  </div>
+  <div class="mf"><button class="bs" id="pysReset">بازگشت به پیش‌فرض</button></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   PYTHON SERVER CODE — نسخه نهایی امن
+   ============================================================ */
+var PYTHON_SERVER_CODE = `#!/usr/bin/env python3
+"""Gemini Agent Pro - Local Server + Sandbox + Telegram (Final)"""
+import os, sys, json, time, shlex, subprocess, secrets, tempfile, asyncio, shutil, platform
+from pathlib import Path
+from typing import Optional, Dict, Any
+from contextlib import asynccontextmanager
+
+try:
+    from fastapi import FastAPI, HTTPException, Header, Depends
+    from fastapi.middleware.cors import CORSMiddleware
+    from pydantic import BaseModel
+    import httpx
+    import uvicorn
+except ImportError:
+    print("pip install fastapi uvicorn[standard] pydantic httpx")
+    sys.exit(1)
+
+try:
+    from cryptography.fernet import Fernet
+    HAS_CRYPTO = True
+except ImportError:
+    HAS_CRYPTO = False
+
+IS_WINDOWS = platform.system() == "Windows"
+if not IS_WINDOWS:
+    try:
+        import resource
+        HAS_RESOURCE = True
+    except ImportError:
+        HAS_RESOURCE = False
+else:
+    HAS_RESOURCE = False
+
+PORT = int(os.environ.get("PORT", "8765"))
+HOST = os.environ.get("HOST", "127.0.0.1")
+WORKSPACE = os.path.abspath(os.environ.get("WORKSPACE", os.getcwd()))
+MAX_TIMEOUT = int(os.environ.get("MAX_TIMEOUT", "120"))
+MAX_FILE_SIZE = int(os.environ.get("MAX_FILE_SIZE", str(1024 * 1024)))
+MAX_OUTPUT = int(os.environ.get("MAX_OUTPUT", str(100 * 1024)))
+MAX_MEMORY_MB = int(os.environ.get("MAX_MEMORY_MB", "256"))
+MAX_CPU_SECONDS = int(os.environ.get("MAX_CPU_SECONDS", "30"))
+AUTH_TOKEN = os.environ.get("AUTH_TOKEN") or secrets.token_urlsafe(24)
+CONFIG_DIR = Path.home() / ".gemini-agent"
+CONFIG_DIR.mkdir(exist_ok=True)
+MCP_CONFIG_FILE = CONFIG_DIR / "mcp_servers.json"
+MCP_PID_FILE = CONFIG_DIR / "mcp_pids.json"
+TELEGRAM_CONFIG_FILE = CONFIG_DIR / "telegram_config.json"
+MASTER_KEY_FILE = CONFIG_DIR / ".master.key"
+
+CORS_ORIGINS_ENV = os.environ.get("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,http://localhost:8765,http://127.0.0.1:8765,null")
+CORS_ORIGINS = [o.strip() for o in CORS_ORIGINS_ENV.split(",") if o.strip()]
+
+# ★ پروکسی Cloudflare Worker — برای دور زدن تحریم
+SANDBOX_AGENT_ID = os.environ.get("SANDBOX_AGENT_ID", "antigravity-preview-05-2026")
+SANDBOX_BASE_URL = os.environ.get("SANDBOX_BASE_URL", "https://gemini-proxy.maytham-saeidi.workers.dev")
+SANDBOX_ENABLED = os.environ.get("SANDBOX_ENABLED", "false").lower() == "true"
+
+BLOCKED = {
+    "rm", "rmdir", "del", "format", "mkfs", "dd", "shutdown", "reboot",
+    "kill", "pkill", "taskkill", "sudo", "su", "chmod", "chown",
+    "curl", "wget", "nc", "netcat", "ssh", "scp", "ftp", "telnet",
+    "nc.traditional", "ncat", "socat", "iptables", "ufw",
+}
+DANGEROUS_CHARS = set(";|&\`$<>")
+
+def _get_fernet():
+    if not HAS_CRYPTO: return None
+    if not MASTER_KEY_FILE.exists() or MASTER_KEY_FILE.stat().st_size == 0:
+        MASTER_KEY_FILE.write_bytes(Fernet.generate_key())
+        try: os.chmod(MASTER_KEY_FILE, 0o600)
+        except Exception: pass
+    try: return Fernet(MASTER_KEY_FILE.read_bytes())
+    except Exception: return None
+
+def _encrypt(s):
+    if not s: return s
+    f = _get_fernet()
+    if not f: return s
+    try: return f.encrypt(s.encode()).decode()
+    except Exception: return s
+
+def _decrypt(s):
+    if not s: return s
+    f = _get_fernet()
+    if not f: return s
+    try: return f.decrypt(s.encode()).decode()
+    except Exception: return s
+
+async def sandbox_execute(input_text, tools=None, env=None):
+    if not SANDBOX_ENABLED:
+        return {"error": "Sandbox is disabled."}
+    api_key = os.environ.get("GEMINI_API_KEY", "")
+    if not api_key:
+        return {"error": "GEMINI_API_KEY not set"}
+    url = SANDBOX_BASE_URL + "/v1beta/interactions"
+    payload = {"agent": SANDBOX_AGENT_ID, "input": input_text, "environment": env or "remote"}
+    if tools: payload["tools"] = tools
+    headers = {"Content-Type": "application/json", "x-goog-api-key": api_key}
+    try:
+        async with httpx.AsyncClient(timeout=300) as client:
+            resp = await client.post(url, json=payload, headers=headers)
+            if resp.status_code >= 400:
+                return {"error": "HTTP " + str(resp.status_code), "detail": resp.text[:500]}
+            return resp.json()
+    except Exception as e:
+        return {"error": str(e)}
+
+MCP_REGISTRY = {
+    "filesystem": {"name":"Filesystem","description":"دسترسی فایل","category":"system","install":[],"run":["npx","-y","@modelcontextprotocol/server-filesystem",WORKSPACE],"health":None,"port":None,"requires":["node18"]},
+    "github": {"name":"GitHub","description":"مخازن","category":"github","install":[],"run":["npx","-y","@modelcontextprotocol/server-github"],"health":None,"port":None,"requires":["node18"]},
+    "playwright": {"name":"Playwright","description":"مرورگر","category":"browser","install":[],"run":["npx","-y","@playwright/mcp","--headless"],"health":None,"port":None,"requires":["node18"]},
+    "tavily": {"name":"Tavily","description":"جستجو","category":"data","install":[],"run":["npx","-y","tavily-mcp"],"health":None,"port":None,"requires":["node18"]},
+    "context7": {"name":"Context7","description":"مستندات","category":"code_intelligence","install":[],"run":["npx","-y","@upstash/context7-mcp"],"health":None,"port":None,"requires":["node18"]},
+    "ast_grep": {"name":"AST-Grep","description":"جستجوی کد","category":"code_intelligence","install":[],"run":["npx","-y","ast-grep-mcp"],"health":None,"port":None,"requires":["node18"]},
+    "semgrep": {"name":"Semgrep","description":"امنیت","category":"security","install":["pip install semgrep"],"run":["semgrep","--mcp"],"health":None,"port":None,"requires":["python3"]},
+    "fetch": {"name":"Fetch","description":"URL","category":"data","install":["pip install mcp-server-fetch"],"run":["python","-m","mcp_server_fetch"],"health":None,"port":None,"requires":["python3"]},
+    "dbhub": {"name":"DBHub","description":"دیتابیس","category":"system","install":[],"run":["npx","-y","@bytebase/dbhub"],"health":None,"port":None,"requires":["node18"]},
+    "omniroute": {"name":"OmniRoute","description":"Providers","category":"gateway","install":["npm install -g omniroute"],"run":["omniroute"],"health":"http://localhost:20128/health","port":20128,"requires":["node18"]},
+}
+
+def resolve_command(cmd_list):
+    if not IS_WINDOWS or not cmd_list:
+        return cmd_list
+    first = cmd_list[0]
+    if first in ("npx", "npm", "yarn", "pnpm", "node"):
+        resolved = shutil.which(first + ".cmd") or shutil.which(first)
+        if resolved:
+            return [resolved] + cmd_list[1:]
+        return ["cmd", "/c"] + cmd_list
+    return cmd_list
+
+def _set_resource_limits():
+    if not HAS_RESOURCE: return
+    try:
+        mem_bytes = MAX_MEMORY_MB * 1024 * 1024
+        resource.setrlimit(resource.RLIMIT_AS, (mem_bytes, mem_bytes))
+        resource.setrlimit(resource.RLIMIT_CPU, (MAX_CPU_SECONDS, MAX_CPU_SECONDS))
+        try: resource.setrlimit(resource.RLIMIT_NPROC, (20, 20))
+        except Exception: pass
+        try: resource.setrlimit(resource.RLIMIT_NOFILE, (128, 128))
+        except Exception: pass
+        try: resource.setrlimit(resource.RLIMIT_FSIZE, (10*1024*1024, 10*1024*1024))
+        except Exception: pass
+    except Exception as e:
+        print("[limits] " + str(e))
+
+class MCPManager:
+    def __init__(self):
+        self.servers = {}
+        self.processes = {}
+        self.load_config()
+        self._restore_pids()
+
+    def load_config(self):
+        if MCP_CONFIG_FILE.exists():
+            try:
+                self.servers = json.loads(MCP_CONFIG_FILE.read_text(encoding="utf-8"))
+            except Exception:
+                self.servers = {}
+        for sid, spec in MCP_REGISTRY.items():
+            if sid not in self.servers:
+                self.servers[sid] = {"id": sid, "enabled": False, "status": "not_installed", "config": {}, "spec": spec}
+            else:
+                self.servers[sid]["spec"] = spec
+                if self.servers[sid].get("status") in ("running", "healthy"):
+                    self.servers[sid]["status"] = "stopped"
+                    self.servers[sid]["enabled"] = False
+        self.save_config()
+
+    def save_config(self):
+        try:
+            MCP_CONFIG_FILE.write_text(json.dumps(self.servers, indent=2, ensure_ascii=False), encoding="utf-8")
+        except Exception as e:
+            print("Save failed: " + str(e))
+
+    def _restore_pids(self):
+        if not MCP_PID_FILE.exists(): return
+        try:
+            saved = json.loads(MCP_PID_FILE.read_text(encoding="utf-8"))
+            for sid, pid in saved.items():
+                if sid in self.servers:
+                    try:
+                        os.kill(pid, 0)
+                        self.servers[sid]["status"] = "running"
+                        self.servers[sid]["enabled"] = True
+                        print("[MCP] Restored " + sid + " (pid " + str(pid) + ")")
+                    except OSError:
+                        self.servers[sid]["status"] = "stopped"
+                        self.servers[sid]["enabled"] = False
+            self.save_config()
+        except Exception as e:
+            print("[MCP] restore failed: " + str(e))
+
+    def _save_pids(self):
+        try:
+            data = {}
+            for sid, proc in self.processes.items():
+                if proc and proc.returncode is None:
+                    data[sid] = proc.pid
+            MCP_PID_FILE.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        except Exception as e:
+            print("[MCP] save pids failed: " + str(e))
+
+    def list_servers(self):
+        result = []
+        for sid, srv in self.servers.items():
+            spec = srv.get("spec", {})
+            result.append({"id": sid, "name": spec.get("name", sid), "description": spec.get("description", ""), "category": spec.get("category", "other"), "enabled": srv.get("enabled", False), "status": srv.get("status", "not_installed")})
+        return result
+
+    async def check_health(self, sid):
+        srv = self.servers.get(sid)
+        if not srv: return "not_found"
+        spec = srv.get("spec", {})
+        health_url = spec.get("health")
+        if not health_url:
+            proc = self.processes.get(sid)
+            if proc and proc.poll() is None: return "healthy"
+            return "unknown"
+        try:
+            async with httpx.AsyncClient(timeout=3.0) as client:
+                resp = await client.get(health_url)
+                return "healthy" if resp.status_code < 500 else "unhealthy"
+        except Exception:
+            return "down"
+
+    async def install(self, sid):
+        srv = self.servers.get(sid)
+        if not srv: return {"error": "not found", "success": False}
+        spec = srv.get("spec", {})
+        results = []
+        errors = []
+        for cmd in spec.get("install", []):
+            try:
+                resolved = resolve_command(shlex.split(cmd))
+                proc = await asyncio.create_subprocess_exec(*resolved, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, cwd=WORKSPACE)
+                stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=300)
+                ok = proc.returncode == 0
+                results.append({"cmd": cmd, "returncode": proc.returncode, "ok": ok})
+                if not ok: errors.append(cmd + " -> " + (stderr.decode("utf-8", "replace")[:300]))
+            except Exception as e:
+                errors.append(str(e))
+        if errors:
+            srv["status"] = "install_failed"
+            self.save_config()
+            return {"installed": sid, "success": False, "errors": errors, "results": results}
+        srv["status"] = "installed"
+        self.save_config()
+        return {"installed": sid, "success": True, "results": results}
+
+    async def start(self, sid, config=None):
+        srv = self.servers.get(sid)
+        if not srv: return {"error": "not found", "success": False}
+        proc = self.processes.get(sid)
+        if proc and proc.poll() is None: return {"status": "already_running", "success": True}
+        if config:
+            srv["config"] = {**srv.get("config", {}), **config}
+            self.save_config()
+        spec = srv.get("spec", {})
+        run_cmd = spec.get("run", [])
+        if not run_cmd: return {"error": "no run command", "success": False}
+        env = os.environ.copy()
+        for k, v in srv.get("config", {}).items(): env[k] = str(v)
+        resolved = resolve_command(run_cmd)
+        try:
+            proc = await asyncio.create_subprocess_exec(*resolved, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE, cwd=WORKSPACE, env=env)
+            self.processes[sid] = proc
+            srv["status"] = "running"
+            srv["enabled"] = True
+            self.save_config()
+            self._save_pids()
+            await asyncio.sleep(2)
+            if proc.poll() is not None:
+                srv["status"] = "crashed"
+                self.save_config()
+                return {"error": "crashed immediately", "success": False}
+            health = await self.check_health(sid)
+            srv["status"] = health if health != "unknown" else "running"
+            self.save_config()
+            return {"started": sid, "health": health, "success": True}
+        except Exception as e:
+            srv["status"] = "start_failed"
+            self.save_config()
+            return {"error": str(e), "success": False}
+
+    async def stop(self, sid):
+        proc = self.processes.get(sid)
+        if not proc:
+            srv = self.servers.get(sid)
+            if srv:
+                srv["status"] = "stopped"
+                srv["enabled"] = False
+                self.save_config()
+            return {"status": "not_running", "success": True}
+        try:
+            proc.terminate()
+            try: await asyncio.wait_for(proc.wait(), timeout=5)
+            except asyncio.TimeoutError: proc.kill()
+            del self.processes[sid]
+            self._save_pids()
+            srv = self.servers.get(sid)
+            if srv:
+                srv["status"] = "stopped"
+                srv["enabled"] = False
+                self.save_config()
+            return {"stopped": sid, "success": True}
+        except Exception as e:
+            return {"error": str(e), "success": False}
+
+    async def health_check_all(self):
+        results = {}
+        for sid in self.servers: results[sid] = await self.check_health(sid)
+        return results
+
+    async def stop_all(self):
+        for sid in list(self.processes.keys()):
+            try: await self.stop(sid)
+            except Exception: pass
+
+mcp_manager = MCPManager()
+
+_telegram_app = None
+
+def _load_telegram_config():
+    if TELEGRAM_CONFIG_FILE.exists():
+        try:
+            cfg = json.loads(TELEGRAM_CONFIG_FILE.read_text(encoding="utf-8"))
+            if cfg.get("token"): cfg["token"] = _decrypt(cfg["token"])
+            if cfg.get("geminiApiKey"): cfg["geminiApiKey"] = _decrypt(cfg["geminiApiKey"])
+            return cfg
+        except Exception: return {}
+    return {}
+
+def _save_telegram_config(cfg):
+    try:
+        stored = dict(cfg)
+        if stored.get("token"): stored["token"] = _encrypt(stored["token"])
+        if stored.get("geminiApiKey"): stored["geminiApiKey"] = _encrypt(stored["geminiApiKey"])
+        TELEGRAM_CONFIG_FILE.write_text(json.dumps(stored, indent=2, ensure_ascii=False), encoding="utf-8")
+    except Exception as e:
+        print("[Telegram] save failed: " + str(e))
+
+async def start_telegram_bot_async(token, gemini_api_key, worker_url, default_model):
+    global _telegram_app
+    try:
+        from telegram import Update
+        from telegram.ext import Application, CommandHandler, MessageHandler, filters
+    except ImportError:
+        print("[Telegram] python-telegram-bot not installed")
+        return False
+    try:
+        import google.genai as genai
+        client = genai.Client(api_key=gemini_api_key)
+    except Exception as e:
+        print("[Telegram] google-genai failed: " + str(e))
+        return False
+
+    async def cmd_start(update, context):
+        await update.message.reply_text("سلام! من ایجنت Gemini هستم.\\n- متن بفرست\\n- عکس بفرست\\n- فایل صوتی بفرست\\n- سند بفرست\\n\\nدستورات:\\n/start - شروع\\n/clear - پاک کردن\\n/status - وضعیت")
+
+    async def cmd_clear(update, context):
+        context.user_data.clear()
+        await update.message.reply_text("تاریخچه پاک شد.")
+
+    async def cmd_status(update, context):
+        await update.message.reply_text("فعال\\nمدل: " + default_model + "\\nSandbox: " + str(SANDBOX_ENABLED))
+
+    async def handle_text(update, context):
+        try:
+            resp = client.models.generate_content(model=default_model, contents=update.message.text)
+            await update.message.reply_text((getattr(resp, "text", "") or "(بدون پاسخ)")[:4000])
+        except Exception as e:
+            await update.message.reply_text("خطا: " + str(e)[:300])
+
+    async def handle_photo(update, context):
+        try:
+            photo = await update.message.photo[-1].get_file()
+            img_bytes = await photo.download_as_bytearray()
+            caption = update.message.caption or "این تصویر را تحلیل کن."
+            resp = client.models.generate_content(model=default_model, contents=[caption, {"mime_type": "image/jpeg", "data": bytes(img_bytes)}])
+            await update.message.reply_text((getattr(resp, "text", "") or "")[:4000])
+        except Exception as e:
+            await update.message.reply_text("خطا: " + str(e)[:300])
+
+    async def handle_voice(update, context):
+        try:
+            v = update.message.voice or update.message.audio
+            f = await v.get_file()
+            audio_bytes = await f.download_as_bytearray()
+            mime = v.mime_type or "audio/ogg"
+            resp = client.models.generate_content(model=default_model, contents=[{"mime_type": mime, "data": bytes(audio_bytes)}, "این فایل صوتی را به متن تبدیل کن و پاسخ بده."])
+            await update.message.reply_text((getattr(resp, "text", "") or "")[:4000])
+        except Exception as e:
+            await update.message.reply_text("خطا: " + str(e)[:300])
+
+    async def handle_doc(update, context):
+        try:
+            doc = update.message.document
+            f = await doc.get_file()
+            b = await f.download_as_bytearray()
+            mime = doc.mime_type or "application/octet-stream"
+            if mime.startswith("text/"):
+                content = bytes(b).decode("utf-8", errors="replace")
+                resp = client.models.generate_content(model=default_model, contents="خلاصه:\\n\\n" + content[:50000])
+            else:
+                resp = client.models.generate_content(model=default_model, contents=[{"mime_type": mime, "data": bytes(b)}, "این فایل را تحلیل کن."])
+            await update.message.reply_text((getattr(resp, "text", "") or "")[:4000])
+        except Exception as e:
+            await update.message.reply_text("خطا: " + str(e)[:300])
+
+    app = Application.builder().token(token).build()
+    app.add_handler(CommandHandler("start", cmd_start))
+    app.add_handler(CommandHandler("clear", cmd_clear))
+    app.add_handler(CommandHandler("status", cmd_status))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
+    app.add_handler(MessageHandler(filters.PHOTO, handle_photo))
+    app.add_handler(MessageHandler(filters.VOICE | filters.AUDIO, handle_voice))
+    app.add_handler(MessageHandler(filters.Document.ALL, handle_doc))
+
+    await app.initialize()
+    await app.start()
+    if app.updater:
+        await app.updater.start_polling(allowed_updates=Update.ALL_TYPES)
+    _telegram_app = app
+    print("[Telegram] Bot started (async)")
+    return True
+
+async def stop_telegram_bot():
+    global _telegram_app
+    if _telegram_app is None: return
+    try:
+        if _telegram_app.updater: await _telegram_app.updater.stop()
+        await _telegram_app.stop()
+        await _telegram_app.shutdown()
+    except Exception as e:
+        print("[Telegram] stop failed: " + str(e))
+    _telegram_app = None
+
+@asynccontextmanager
+async def lifespan(app):
+    print("=" * 60)
+    print("  Gemini Agent Pro - Server v3.2 (Final)")
+    print("=" * 60)
+    print("  Workspace: " + WORKSPACE)
+    print("  URL: http://" + HOST + ":" + str(PORT))
+    print("  Token: " + AUTH_TOKEN)
+    print("  Sandbox: " + str(SANDBOX_ENABLED))
+    print("  Worker: " + SANDBOX_BASE_URL)
+    print("  CORS: " + ", ".join(CORS_ORIGINS))
+    print("  Encryption: " + str(HAS_CRYPTO))
+    print("=" * 60)
+
+    tg = _load_telegram_config()
+    if tg.get("enabled") and tg.get("token") and tg.get("geminiApiKey"):
+        try:
+            asyncio.create_task(start_telegram_bot_async(tg["token"], tg["geminiApiKey"], tg.get("workerUrl", ""), tg.get("model", "gemini-2.5-flash")))
+            print("  Telegram bot: starting...")
+        except Exception as e:
+            print("  Telegram bot failed: " + str(e))
+    yield
+    await stop_telegram_bot()
+    await mcp_manager.stop_all()
+    print("[Server] shutdown complete")
+
+app = FastAPI(title="Gemini Agent Pro Server", version="3.2.0", lifespan=lifespan)
+app.add_middleware(CORSMiddleware, allow_origins=CORS_ORIGINS if CORS_ORIGINS else ["*"], allow_credentials=False, allow_methods=["GET", "POST", "OPTIONS"], allow_headers=["Content-Type", "Authorization", "x-goog-api-key"])
+
+async def verify_token(authorization: Optional[str] = Header(None)):
+    if not authorization: raise HTTPException(401, "no token")
+    if authorization.replace("Bearer ", "").strip() != AUTH_TOKEN: raise HTTPException(403, "invalid")
+    return True
+
+class ExecRequest(BaseModel): code: str; timeout: float = 30.0
+class TerminalRequest(BaseModel): command: str; cwd: Optional[str] = None; timeout: float = 30.0
+class FsListRequest(BaseModel): path: str = "."; recursive: bool = False
+class FsReadRequest(BaseModel): path: str
+class FsWriteRequest(BaseModel): path: str; content: str
+class FsDeleteRequest(BaseModel): path: str
+class FsSearchRequest(BaseModel): pattern: str; content: bool = False; path: str = "."
+class MCPRequest(BaseModel): server_id: str; config: Optional[Dict[str, Any]] = None
+class SandboxRequest(BaseModel): input: str; tools: Optional[list] = None; environment: Optional[str] = None
+class SandboxToggleRequest(BaseModel): enabled: bool; agent_id: Optional[str] = None
+class TelegramConfigRequest(BaseModel):
+    enabled: bool
+    token: Optional[str] = None
+    geminiApiKey: Optional[str] = None
+    workerUrl: Optional[str] = None
+    model: Optional[str] = None
+
+def safe_path(path):
+    p = Path(path).expanduser()
+    if not p.is_absolute(): p = Path(WORKSPACE) / p
+    p = p.resolve()
+    try: p.relative_to(Path(WORKSPACE).resolve())
+    except ValueError: raise HTTPException(403, "outside workspace")
+    return p
+
+def truncate(text, limit=MAX_OUTPUT):
+    if not text: return ""
+    if len(text) > limit: return text[:limit] + "...(truncated)"
+    return text
+
+@app.api_route("/health", methods=["GET", "POST"])
+def health():
+    tg = _load_telegram_config()
+    return {"status": "ok", "version": "3.2.0", "platform": platform.system(), "workspace": WORKSPACE, "mcp_servers": len(mcp_manager.servers), "sandbox_enabled": SANDBOX_ENABLED, "telegram_enabled": tg.get("enabled", False), "encryption": HAS_CRYPTO}
+
+@app.post("/sandbox/toggle")
+def sandbox_toggle(req: SandboxToggleRequest, _: bool = Depends(verify_token)):
+    global SANDBOX_ENABLED, SANDBOX_AGENT_ID
+    SANDBOX_ENABLED = req.enabled
+    if req.agent_id: SANDBOX_AGENT_ID = req.agent_id
+    return {"sandbox_enabled": SANDBOX_ENABLED, "agent_id": SANDBOX_AGENT_ID}
+
+@app.post("/sandbox/run")
+async def sandbox_run(req: SandboxRequest, _: bool = Depends(verify_token)):
+    return await sandbox_execute(req.input, req.tools, req.environment)
+
+@app.get("/sandbox/status")
+def sandbox_status(_: bool = Depends(verify_token)):
+    return {"enabled": SANDBOX_ENABLED, "agent_id": SANDBOX_AGENT_ID, "available": bool(os.environ.get("GEMINI_API_KEY")), "worker": SANDBOX_BASE_URL}
+
+@app.post("/telegram/config")
+def telegram_config(req: TelegramConfigRequest, _: bool = Depends(verify_token)):
+    cfg = _load_telegram_config()
+    cfg["enabled"] = req.enabled
+    if req.token: cfg["token"] = req.token
+    if req.geminiApiKey: cfg["geminiApiKey"] = req.geminiApiKey
+    if req.workerUrl: cfg["workerUrl"] = req.workerUrl
+    if req.model: cfg["model"] = req.model
+    _save_telegram_config(cfg)
+    return {"saved": True, "enabled": cfg.get("enabled", False)}
+
+@app.get("/telegram/status")
+def telegram_status(_: bool = Depends(verify_token)):
+    cfg = _load_telegram_config()
+    running = _telegram_app is not None
+    return {"enabled": cfg.get("enabled", False), "running": running, "has_token": bool(cfg.get("token")), "has_key": bool(cfg.get("geminiApiKey"))}
+
+@app.post("/telegram/restart")
+async def telegram_restart(_: bool = Depends(verify_token)):
+    cfg = _load_telegram_config()
+    if not cfg.get("token") or not cfg.get("geminiApiKey"):
+        return {"error": "Token or key missing", "success": False}
+    try:
+        await stop_telegram_bot()
+        asyncio.create_task(start_telegram_bot_async(cfg["token"], cfg["geminiApiKey"], cfg.get("workerUrl", ""), cfg.get("model", "gemini-2.5-flash")))
+        return {"success": True}
+    except Exception as e:
+        return {"error": str(e), "success": False}
+
+@app.post("/execute")
+def execute_code(req: ExecRequest, _: bool = Depends(verify_token)):
+    timeout = min(req.timeout, MAX_TIMEOUT)
+    tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".py", delete=False, encoding="utf-8")
+    try:
+        tmp.write(req.code); tmp.close()
+        args = [sys.executable, "-I", "-S", tmp.name]
+        kwargs = dict(capture_output=True, text=True, timeout=timeout, cwd=WORKSPACE, encoding="utf-8", errors="replace", env={"PATH": os.environ.get("PATH", ""), "HOME": tempfile.gettempdir(), "LANG": "en_US.UTF-8", "PYTHONIOENCODING": "utf-8"})
+        if not IS_WINDOWS and HAS_RESOURCE: kwargs["preexec_fn"] = _set_resource_limits
+        proc = subprocess.run(args, **kwargs)
+        return {"stdout": truncate(proc.stdout), "stderr": truncate(proc.stderr), "returncode": proc.returncode}
+    except subprocess.TimeoutExpired:
+        return {"stdout": "", "stderr": "timeout", "returncode": -1}
+    except Exception as e:
+        return {"stdout": "", "stderr": str(e), "returncode": -1}
+    finally:
+        try: os.unlink(tmp.name)
+        except Exception: pass
+
+@app.post("/terminal")
+def run_terminal(req: TerminalRequest, _: bool = Depends(verify_token)):
+    timeout = min(req.timeout, MAX_TIMEOUT)
+    try: parts = shlex.split(req.command)
+    except ValueError as e: raise HTTPException(400, "invalid command: " + str(e))
+    if not parts: raise HTTPException(400, "empty command")
+    for p in parts:
+        base = Path(p).name.lower()
+        if base in BLOCKED: raise HTTPException(403, "blocked command: " + p)
+        if any(c in p for c in DANGEROUS_CHARS): raise HTTPException(403, "dangerous character in: " + p)
+    cwd = WORKSPACE
+    if req.cwd:
+        try: cwd = str(safe_path(req.cwd))
+        except HTTPException: pass
+    try:
+        proc = subprocess.run(parts, shell=False, capture_output=True, text=True, timeout=timeout, cwd=cwd, encoding="utf-8", errors="replace")
+        return {"stdout": truncate(proc.stdout), "stderr": truncate(proc.stderr), "returncode": proc.returncode}
+    except subprocess.TimeoutExpired:
+        return {"stdout": "", "stderr": "timeout", "returncode": -1}
+    except FileNotFoundError as e:
+        return {"stdout": "", "stderr": "not found: " + str(e), "returncode": -1}
+    except Exception as e:
+        return {"stdout": "", "stderr": str(e), "returncode": -1}
+
+@app.post("/fs/list")
+def fs_list(req: FsListRequest, _: bool = Depends(verify_token)):
+    try: p = safe_path(req.path)
+    except HTTPException: p = Path(WORKSPACE).resolve()
+    if not p.exists(): raise HTTPException(404, "not found")
+    if not p.is_dir(): raise HTTPException(400, "not dir")
+    items = []
+    try:
+        iterator = p.rglob("*") if req.recursive else p.iterdir()
+        for e in iterator:
+            try:
+                if e.is_file(): items.append({"path": str(e.relative_to(WORKSPACE)), "type": "file", "size": e.stat().st_size})
+                elif e.is_dir(): items.append({"path": str(e.relative_to(WORKSPACE)), "type": "dir"})
+            except Exception: continue
+            if len(items) >= 500: break
+    except Exception as e: raise HTTPException(500, str(e))
+    return {"workspace": WORKSPACE, "items": items}
+
+@app.post("/fs/read")
+def fs_read(req: FsReadRequest, _: bool = Depends(verify_token)):
+    p = safe_path(req.path)
+    if not p.exists(): raise HTTPException(404, "not found")
+    if not p.is_file(): raise HTTPException(400, "not file")
+    size = p.stat().st_size
+    if size > MAX_FILE_SIZE:
+        with open(p, "r", encoding="utf-8", errors="replace") as f: content = f.read(MAX_FILE_SIZE)
+        return {"path": req.path, "size": size, "truncated": True, "content": content}
+    with open(p, "r", encoding="utf-8", errors="replace") as f: content = f.read()
+    return {"path": req.path, "size": size, "truncated": False, "content": content}
+
+@app.post("/fs/write")
+def fs_write(req: FsWriteRequest, _: bool = Depends(verify_token)):
+    p = safe_path(req.path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with open(p, "w", encoding="utf-8") as f: f.write(req.content)
+    return {"path": req.path, "written": len(req.content), "ok": True}
+
+@app.post("/fs/delete")
+def fs_delete(req: FsDeleteRequest, _: bool = Depends(verify_token)):
+    p = safe_path(req.path)
+    if not p.exists(): raise HTTPException(404, "not found")
+    if p.is_dir(): shutil.rmtree(p)
+    else: p.unlink()
+    return {"path": req.path, "deleted": True}
+
+@app.post("/fs/search")
+def fs_search(req: FsSearchRequest, _: bool = Depends(verify_token)):
+    import fnmatch
+    try: base = safe_path(req.path)
+    except HTTPException: base = Path(WORKSPACE).resolve()
+    matches = []
+    for e in base.rglob("*"):
+        if len(matches) >= 100: break
+        if e.is_file():
+            rel = str(e.relative_to(WORKSPACE))
+            if fnmatch.fnmatch(e.name, req.pattern): matches.append({"path": rel, "match": "filename"})
+            elif req.content:
+                try:
+                    with open(e, "r", encoding="utf-8", errors="ignore") as f:
+                        for i, line in enumerate(f, 1):
+                            if req.pattern.lower() in line.lower():
+                                matches.append({"path": rel, "match": "content", "line": i})
+                                break
+                except Exception: pass
+    return {"workspace": WORKSPACE, "matches": matches, "total": len(matches)}
+
+@app.api_route("/mcp/list", methods=["GET", "POST"])
+def mcp_list(_: bool = Depends(verify_token)): return {"servers": mcp_manager.list_servers()}
+@app.post("/mcp/install")
+async def mcp_install(req: MCPRequest, _: bool = Depends(verify_token)): return await mcp_manager.install(req.server_id)
+@app.post("/mcp/start")
+async def mcp_start(req: MCPRequest, _: bool = Depends(verify_token)): return await mcp_manager.start(req.server_id, req.config)
+@app.post("/mcp/stop")
+async def mcp_stop(req: MCPRequest, _: bool = Depends(verify_token)): return await mcp_manager.stop(req.server_id)
+@app.api_route("/mcp/health", methods=["GET", "POST"])
+async def mcp_health(_: bool = Depends(verify_token)): return {"servers": await mcp_manager.health_check_all()}
+@app.api_route("/mcp/registry", methods=["GET", "POST"])
+def mcp_registry(_: bool = Depends(verify_token)): return {"registry": list(MCP_REGISTRY.keys()), "installed": mcp_manager.list_servers()}
+
+if __name__ == "__main__":
+    if IS_WINDOWS: asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+    uvicorn.run(app, host=HOST, port=PORT, log_level="info")
+`;
+
+/* ============================================================
+   DEFAULTS — API Key + Worker برای دور زدن تحریم
+   ============================================================ */
+var DEFAULTS = {
+  workerUrl: "https://gemini-proxy.maytham-saeidi.workers.dev",
+  apiKey: "AQ.Ab8RN6ICZyNuoCxE9_0_hSVHBAbPYmL4_S3-EOVVTlMuNLV4kQ",
+  model: "gemini-3.8-flash",
+  systemPrompt: "شما یک دستیار هوشمند، دقیق و مفید هستید. همیشه به زبان فارسی پاسخ دهید. از ابزارهای موجود استفاده کنید.",
+  maxTokens: 8192,
+  thinkingLevel: "MEDIUM",
+  toolRounds: 8,
+  mediaResolution: "MEDIA_RESOLUTION_LOW",
+  contextCaching: false,
+  contextCacheTTL: 3600,
+  fallback: true,
+  multiSearch: true,
+  showThoughts: true,
+  showStats: true,
+  debug: true,
+  localUrl: "http://127.0.0.1:8765",
+  localToken: "",
+  pmEnabled: false,
+  pmSupervisor: true,
+  autoProvision: false,
+  pmBudget: 50000,
+  pmMaxAgents: 4,
+  stmEnabled: true,
+  summaryEnabled: true,
+  ltmEnabled: true,
+  stmMaxMessages: 8,
+  ltmMaxItems: 100,
+  codeAnalysis: true,
+  autoEnrich: true,
+  skeletonThreshold: 5000,
+  maxRelevantFiles: 5,
+  managedAgents: false,
+  thoughtSigs: true,
+  structuredOutput: true,
+  parallelFC: true,
+  embeddings: false,
+  filesApi: false,
+  computerUse: false,
+  deepResearch: false,
+  imageGen: false,
+  ttsEnabled: false,
+  sttEnabled: false,
+  videoGen: false,
+  sandboxEnabled: false,
+  telegramEnabled: false,
+  telegramToken: "",
+  antigravityAgent: "antigravity-preview-05-2026",
+  deepResearchAgent: "deep-research-preview-04-2026",
+  imageModel: "gemini-3.1-flash-image",
+  ttsModel: "gemini-3.8-flash-tts-preview",
+  sttModel: "gemini-3.5-transcribe",
+  videoModel: "veo-3.1",
+  imageAspectRatio: "1:1",
+  imageSize: "1K",
+  ttsVoice: "Kore",
+  safetyHarassment: "BLOCK_MEDIUM_AND_ABOVE",
+  safetyHate: "BLOCK_MEDIUM_AND_ABOVE",
+  safetySexual: "BLOCK_MEDIUM_AND_ABOVE",
+  safetyDangerous: "BLOCK_MEDIUM_AND_ABOVE",
+  enabledTools: {
+    get_current_time: true, calculate: true, web_search: true,
+    py_execute: true, terminal: true,
+    fs_list: true, fs_read: true, fs_write: true, fs_search: true, fs_delete: false,
+    code_index: true, code_symbols: true, code_skeleton: true,
+    code_relevant: true, code_dependencies: true,
+    mcp_list: true, mcp_install: true, mcp_start: true, mcp_health: true,
+    deep_research: true, generate_image: true, text_to_speech: true,
+    sandbox_execute: true
+  }
+};
+
+var S = {
+  cfg: JSON.parse(JSON.stringify(DEFAULTS)),
+  hist: [], busy: false, ctrl: null, pm: null,
+  pmMode: false, codeMode: false, mcpMode: false, agentMode: false, imgMode: false, sandboxMode: false,
+  mem: null, codeIndexer: null, debug: null,
+  thoughtSignatures: {},
+  agentSession: { interactionId: null, environmentId: null, steps: [] },
+  mediaResults: [],
+  pythonCode: PYTHON_SERVER_CODE,
+  setTab: "api",
+  _cache: { name: null, key: null },
+  _recorder: null
+};
+
+function $(id) { return document.getElementById(id); }
+var streamEl, inputEl, actBtn, toastEl, mName, conn, connT;
+var modal, scrim, memModal, memScrim, codeModal, codeScrim;
+var mcpModal, mcpScrim, agentModal, agentScrim, imgModal, imgScrim;
+var dbgModal, dbgScrim, pysModal, pysScrim;
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, function(c) {
+    if (c === "&") return "&amp;";
+    if (c === "<") return "&lt;";
+    if (c === ">") return "&gt;";
+    if (c === '"') return "&quot;";
+    return "&#39;";
+  });
+}
+
+var tTimer;
+function toast(m, e) {
+  if (!toastEl) return;
+  toastEl.textContent = m;
+  toastEl.classList.toggle("err", !!e);
+  toastEl.classList.add("show");
+  clearTimeout(tTimer);
+  tTimer = setTimeout(function() { toastEl.classList.remove("show"); }, 2600);
+}
+function scroll() { requestAnimationFrame(function() { if (streamEl) streamEl.scrollTop = streamEl.scrollHeight; }); }
+function resize() { if (!inputEl) return; inputEl.style.height = "auto"; inputEl.style.height = Math.min(inputEl.scrollHeight, 110) + "px"; }
+
+function updateActionBtn() {
+  if (!actBtn) return;
+  actBtn.classList.remove("mic", "go", "stop", "pm-go", "code-go", "mcp-go", "agent-go", "img-go", "sandbox-go", "recording");
+  if (S.busy) actBtn.classList.add("stop");
+  else if (S._recorder) actBtn.classList.add("recording");
+  else {
+    var hasText = inputEl.value.trim().length > 0;
+    if (S.sandboxMode && hasText) actBtn.classList.add("sandbox-go");
+    else if (S.imgMode && hasText) actBtn.classList.add("img-go");
+    else if (S.agentMode && hasText) actBtn.classList.add("agent-go");
+    else if (S.mcpMode && hasText) actBtn.classList.add("mcp-go");
+    else if (S.codeMode && hasText) actBtn.classList.add("code-go");
+    else if (S.pmMode && hasText) actBtn.classList.add("pm-go");
+    else if (hasText) actBtn.classList.add("go");
+    else actBtn.classList.add("mic");
+  }
+  var icoMic = actBtn.querySelector(".i-m");
+  var icoSend = actBtn.querySelector(".i-s");
+  var icoStop = actBtn.querySelector(".i-st");
+  var isMic = actBtn.classList.contains("mic");
+  var isRec = actBtn.classList.contains("recording");
+  var isStop = actBtn.classList.contains("stop");
+  if (icoMic) icoMic.style.display = isMic ? "" : "none";
+  if (icoSend) icoSend.style.display = (!isMic && !isRec) ? "" : "none";
+  if (icoStop) icoStop.style.display = (isStop || isRec) ? "" : "none";
+}
+
+function setConn(ok, t, cls) {
+  if (!conn) return;
+  conn.classList.toggle("off", !ok);
+  conn.classList.remove("pm", "mem", "code", "mcp", "agent", "img", "sandbox");
+  if (cls) conn.classList.add(cls);
+  connT.textContent = t;
+}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+/* Markdown */
+function md(src) {
+  if (!src) return "";
+  var cb = [];
+  var t = src.replace(/```(\w*)\n?([\s\S]*?)```/g, function(_, l, c) {
+    cb.push({ l: l || "code", c: c.replace(/\n$/, "") });
+    return "\u0000C" + (cb.length - 1) + "\u0000";
+  });
+  t = esc(t);
+  t = t.replace(/^### (.+)$/gm, "<h3>$1</h3>");
+  t = t.replace(/^## (.+)$/gm, "<h2>$1</h2>");
+  t = t.replace(/^# (.+)$/gm, "<h1>$1</h1>");
+  t = t.replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>");
+  t = t.replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>");
+  t = t.replace(/`([^`\n]+)`/g, "<code>$1</code>");
+  t = t.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+
+  var lines = t.split("\n");
+  var out = [];
+  var inList = false;
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    var x = line.trim();
+    var isLi = /^[-*]\s+(.+)$/.test(x);
+    if (isLi) {
+      if (!inList) { out.push("<ul>"); inList = true; }
+      out.push("<li>" + x.replace(/^[-*]\s+/, "") + "</li>");
+    } else {
+      if (inList) { out.push("</ul>"); inList = false; }
+      if (!x) continue;
+      if (/^<(h[1-3]|ul|ol|li|pre|blockquote|hr)/.test(x) || /^\u0000/.test(x)) out.push(line);
+      else out.push("<p>" + line + "</p>");
+    }
+  }
+  if (inList) out.push("</ul>");
+
+  var result = out.join("\n");
+  result = result.replace(/\u0000C(\d+)\u0000/g, function(_, idx) {
+    return "<pre><code>" + esc(cb[idx].c) + "</code></pre>";
+  });
+  return result;
+}
+
+/* Memory */
+var MemoryDB = {
+  dbName: "gemini-agent-memory", storeName: "facts", version: 2,
+  open: function() {
+    return new Promise(function(res, rej) {
+      var r = indexedDB.open(MemoryDB.dbName, MemoryDB.version);
+      r.onupgradeneeded = function(e) {
+        var db = e.target.result;
+        var oldVersion = e.oldVersion;
+        if (oldVersion < 1) {
+          var s = db.createObjectStore(MemoryDB.storeName, { keyPath: "id", autoIncrement: true });
+          s.createIndex("type", "type", { unique: false });
+          s.createIndex("ts", "ts", { unique: false });
+        }
+        if (oldVersion >= 1 && oldVersion < 2) {
+          try {
+            var s2 = e.target.transaction.objectStore(MemoryDB.storeName);
+            if (!s2.indexNames.contains("importance")) s2.createIndex("importance", "importance", { unique: false });
+          } catch (err) {}
+        }
+      };
+      r.onsuccess = function() { res(r.result); };
+      r.onerror = function() { rej(r.error); };
+    });
+  },
+  add: function(f) {
+    return MemoryDB.open().then(function(db) {
+      return new Promise(function(res, rej) {
+        var tx = db.transaction(MemoryDB.storeName, "readwrite");
+        var s = tx.objectStore(MemoryDB.storeName);
+        var rec = Object.assign({}, f, { ts: Date.now() });
+        var r = s.add(rec);
+        r.onsuccess = function() { res(Object.assign({}, rec, { id: r.result })); };
+        r.onerror = function() { rej(r.error); };
+      });
+    });
+  },
+  getAll: function() {
+    return MemoryDB.open().then(function(db) {
+      return new Promise(function(res, rej) {
+        var tx = db.transaction(MemoryDB.storeName, "readonly");
+        var r = tx.objectStore(MemoryDB.storeName).getAll();
+        r.onsuccess = function() { res(r.result || []); };
+        r.onerror = function() { rej(r.error); };
+      });
+    });
+  },
+  clear: function() {
+    return MemoryDB.open().then(function(db) {
+      return new Promise(function(res, rej) {
+        var tx = db.transaction(MemoryDB.storeName, "readwrite");
+        var r = tx.objectStore(MemoryDB.storeName).clear();
+        r.onsuccess = function() { res(); };
+        r.onerror = function() { rej(r.error); };
+      });
+    });
+  }
+};
+
+function tokenize(t) { return (t || "").toLowerCase().replace(/[^\w\u0600-\u06FF\s]/g, " ").split(/\s+/).filter(function(x) { return x.length > 2; }); }
+function textToVector(t, v) {
+  var toks = tokenize(t);
+  var vec = new Array(v.length).fill(0);
+  toks.forEach(function(x) { var i = v.indexOf(x); if (i >= 0) vec[i]++; });
+  var m = Math.sqrt(vec.reduce(function(s, x) { return s + x * x; }, 0)) || 1;
+  return vec.map(function(x) { return x / m; });
+}
+function cosine(a, b) { var d = 0; for (var i = 0; i < a.length; i++) d += a[i] * b[i]; return d; }
+function buildVocab(ts) { var s = new Set(); ts.forEach(function(t) { tokenize(t).forEach(function(x) { s.add(x); }); }); return Array.from(s); }
+
+function MemoryManager() { this.stm = []; this.summary = ""; this.ltm = []; this.stats = { stmCount: 0, ltmCount: 0 }; }
+MemoryManager.prototype.pushMessage = function(role, text) {
+  this.stm.push({ role: role, text: text, ts: Date.now() });
+  if (this.stm.length > S.cfg.stmMaxMessages * 2) this.rollSummary();
+  this.stats.stmCount = this.stm.length;
+};
+MemoryManager.prototype.rollSummary = function() {
+  var self = this;
+  if (!S.cfg.summaryEnabled) { this.stm = this.stm.slice(-S.cfg.stmMaxMessages); return Promise.resolve(); }
+  var toSum = this.stm.slice(0, -S.cfg.stmMaxMessages);
+  if (toSum.length < 2) return Promise.resolve();
+  var text = toSum.map(function(m) { return (m.role === "user" ? "کاربر" : "دستیار") + ": " + m.text; }).join("\n");
+  var prompt = this.summary ? ("خلاصه قبلی:\n" + this.summary + "\n\nجدید:\n" + text) : ("خلاصه کن:\n" + text);
+  return callGemini({ contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 300, thinkingConfig: { thinkingLevel: "MINIMAL" } } })
+    .then(function(r) {
+      var ns = r.candidates && r.candidates[0] && r.candidates[0].content && r.candidates[0].content.parts && r.candidates[0].content.parts[0] && r.candidates[0].content.parts[0].text;
+      if (ns) { self.summary = ns; self.stm = self.stm.slice(-S.cfg.stmMaxMessages); }
+    }).catch(function() { self.stm = self.stm.slice(-S.cfg.stmMaxMessages); });
+};
+MemoryManager.prototype.extractFacts = function(conv) {
+  var self = this;
+  if (!S.cfg.ltmEnabled || conv.length < 2) return Promise.resolve();
+  var t = conv.map(function(m) { return (m.role === "user" ? "کاربر" : "دستیار") + ": " + m.text; }).join("\n");
+  var p = 'حقایق مهم را استخراج کن.\nهر خط JSON: {"content":"...","type":"fact","importance":0.5}\n\n' + t;
+  return callGemini({ contents: [{ role: "user", parts: [{ text: p }] }], generationConfig: { maxOutputTokens: 500, thinkingConfig: { thinkingLevel: "MINIMAL" } } })
+    .then(function(r) {
+      var a = (r.candidates && r.candidates[0] && r.candidates[0].content && r.candidates[0].content.parts && r.candidates[0].content.parts[0] && r.candidates[0].content.parts[0].text) || "";
+      var lines = a.split("\n").filter(function(x) { return x.trim().startsWith("{"); });
+      return Promise.all(lines.map(function(l) {
+        try { var f = JSON.parse(l.trim()); if (f.content && f.content.length > 5) return self.addFact(f.content, f.type || "fact", f.importance || 0.5); } catch (e) {}
+        return Promise.resolve();
+      }));
+    }).catch(function() {});
+};
+MemoryManager.prototype.addFact = function(c, type, imp) {
+  var self = this;
+  if (this.ltm.find(function(f) { return f.content === c; })) return Promise.resolve();
+  return MemoryDB.add({ content: c, type: type, importance: imp })
+    .then(function() { return MemoryDB.getAll(); })
+    .then(function(all) { self.ltm = all; self.stats.ltmCount = all.length; });
+};
+MemoryManager.prototype.getRelevantFacts = function(q, limit) {
+  limit = limit || 5;
+  if (!S.cfg.ltmEnabled || !this.ltm.length) return [];
+  var v = buildVocab([q].concat(this.ltm.map(function(f) { return f.content; })));
+  var qv = textToVector(q, v);
+  return this.ltm.map(function(f) { return Object.assign({}, f, { score: cosine(qv, textToVector(f.content, v)) * (f.importance || 0.5) }); })
+    .sort(function(a, b) { return b.score - a.score; }).slice(0, limit).filter(function(f) { return f.score > 0.05; });
+};
+MemoryManager.prototype.buildContext = function(m) {
+  var parts = [];
+  var facts = this.getRelevantFacts(m);
+  if (facts.length) parts.push("── حقایق ──\n" + facts.map(function(x) { return "• [" + x.type + "] " + x.content; }).join("\n"));
+  if (this.summary) parts.push("── خلاصه ──\n" + this.summary);
+  return parts.join("\n\n");
+};
+MemoryManager.prototype.loadFromDB = function() {
+  var self = this;
+  return MemoryDB.getAll().then(function(all) { self.ltm = all; self.stats.ltmCount = all.length; }).catch(function() {});
+};
+MemoryManager.prototype.clearLTM = function() {
+  var self = this;
+  return MemoryDB.clear().then(function() { self.ltm = []; self.stats.ltmCount = 0; });
+};
+MemoryManager.prototype.getStats = function() {
+  return { stm: this.stm.length, stmMax: S.cfg.stmMaxMessages, summary: this.summary ? this.summary.length + " ch" : "—", ltm: this.ltm.length, ltmMax: S.cfg.ltmMaxItems };
+};
+
+/* Code Indexer */
+var CODE_LANGS = { js: "javascript", jsx: "javascript", mjs: "javascript", ts: "typescript", tsx: "typescript", py: "python", go: "go", rs: "rust", java: "java", rb: "ruby", php: "php", c: "c", cpp: "cpp", h: "c", cs: "csharp", swift: "swift", kt: "kotlin", sh: "shell", bash: "shell" };
+function CodeIndexer() { this.files = {}; this.symbolIndex = {}; this.importGraph = {}; this.stats = { files: 0, symbols: 0, tokens: 0, indexedAt: null }; }
+CodeIndexer.prototype.detectLang = function(p) { return CODE_LANGS[(p.split(".").pop() || "").toLowerCase()] || null; };
+CodeIndexer.prototype.estimateTokens = function(t) { return Math.ceil((t ? t.length : 0) / 3.5); };
+CodeIndexer.prototype.extractSymbols = function(content, lang) {
+  var symbols = [];
+  var lines = content.split("\n");
+  var pats = {
+    javascript: [
+      { re: /^\s*(?:export\s+)?(?:async\s+)?function\s+(\w+)/, type: "function" },
+      { re: /^\s*(?:export\s+)?const\s+(\w+)\s*=\s*(?:async\s+)?(?:\(|function)/, type: "function" },
+      { re: /^\s*(?:export\s+)?class\s+(\w+)/, type: "class" },
+      { re: /^\s*import\s+.*?from\s+['"]([^'"]+)['"]/, type: "import" }
+    ],
+    python: [
+      { re: /^\s*async\s+def\s+(\w+)/, type: "function" },
+      { re: /^\s*def\s+(\w+)/, type: "function" },
+      { re: /^\s*class\s+(\w+)/, type: "class" },
+      { re: /^\s*from\s+(\S+)\s+import/, type: "import" }
+    ]
+  };
+  var P = pats[lang] || pats.javascript;
+  lines.forEach(function(l, i) {
+    P.forEach(function(p) {
+      var m = l.match(p.re);
+      if (m && m[1]) symbols.push({ name: m[1], type: p.type, line: i + 1 });
+    });
+  });
+  return symbols;
+};
+CodeIndexer.prototype.indexFile = function(path, content) {
+  var lang = this.detectLang(path);
+  if (!lang) return null;
+  var symbols = this.extractSymbols(content, lang);
+  var tokens = this.estimateTokens(content);
+  this.files[path] = { lang: lang, symbols: symbols, tokens: tokens, size: content.length };
+  var self = this;
+  symbols.forEach(function(sym) {
+    if (sym.type === "import") return;
+    var k = sym.name.toLowerCase();
+    if (!self.symbolIndex[k]) self.symbolIndex[k] = [];
+    self.symbolIndex[k].push(Object.assign({ file: path }, sym));
+  });
+  this.importGraph[path] = symbols.filter(function(s) { return s.type === "import"; }).map(function(s) { return s.name; });
+  this.stats.files = Object.keys(this.files).length;
+  this.stats.symbols = Object.keys(this.symbolIndex).reduce(function(s, k) { return s + self.symbolIndex[k].length; }, 0);
+  this.stats.tokens += tokens;
+  this.stats.indexedAt = Date.now();
+  return { path: path, lang: lang, symbols: symbols.length, tokens: tokens };
+};
+CodeIndexer.prototype.searchSymbol = function(q) {
+  var Q = q.toLowerCase();
+  var r = [];
+  var self = this;
+  Object.keys(this.symbolIndex).forEach(function(n) { if (n.indexOf(Q) >= 0 || Q.indexOf(n) >= 0) r = r.concat(self.symbolIndex[n]); });
+  return r.slice(0, 50);
+};
+CodeIndexer.prototype.findRelevantFiles = function(q, topK) {
+  topK = topK || 5;
+  var terms = q.toLowerCase().split(/\s+/).filter(function(t) { return t.length > 2; });
+  if (!terms.length) return [];
+  var N = Object.keys(this.files).length || 1;
+  var avg = this.stats.tokens / N || 1;
+  var scores = {};
+  var self = this;
+  Object.keys(this.files).forEach(function(p) {
+    var info = self.files[p];
+    var s = 0;
+    var sea = info.symbols.map(function(x) { return x.name; }).concat([p]).join(" ").toLowerCase();
+    terms.forEach(function(t) {
+      if (sea.indexOf(t) >= 0) {
+        var tf = (sea.match(new RegExp(t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g")) || []).length;
+        s += (tf * 2.5) / (tf + 1.5);
+      }
+    });
+    s *= (1 + info.symbols.length / 50) / (1 + info.tokens / avg * 0.3);
+    if (s > 0.1) scores[p] = s;
+  });
+  return Object.keys(scores).map(function(p) {
+    return { path: p, score: +scores[p].toFixed(2), lang: self.files[p].lang, tokens: self.files[p].tokens };
+  }).sort(function(a, b) { return b.score - a.score; }).slice(0, topK);
+};
+CodeIndexer.prototype.getSkeleton = function(path, maxSyms) {
+  maxSyms = maxSyms || 40;
+  var info = this.files[path];
+  if (!info) return null;
+  var sigs = info.symbols.filter(function(s) { return s.type !== "import"; }).slice(0, maxSyms).map(function(s) {
+    return "  " + s.type.padEnd(10) + " " + s.name.padEnd(30) + " // L" + s.line;
+  });
+  var imports = info.symbols.filter(function(s) { return s.type === "import"; }).slice(0, 15).map(function(s) { return "  import  " + s.name; });
+  var out = "📄 " + path + " (" + info.lang + ") — ~" + info.tokens + " tokens\n";
+  if (imports.length) out += "\nImports:\n" + imports.join("\n") + "\n";
+  out += "\nSymbols:\n" + sigs.join("\n");
+  return out;
+};
+CodeIndexer.prototype.getOverview = function() {
+  var byLang = {};
+  var self = this;
+  Object.keys(this.files).forEach(function(k) { var l = self.files[k].lang; byLang[l] = (byLang[l] || 0) + 1; });
+  return { files: Object.keys(this.files).length, symbols: this.stats.symbols, tokens: this.stats.tokens, byLang: byLang, indexedAt: this.stats.indexedAt };
+};
+CodeIndexer.prototype.clear = function() { this.files = {}; this.symbolIndex = {}; this.importGraph = {}; this.stats = { files: 0, symbols: 0, tokens: 0, indexedAt: null }; };
+
+/* Debug Logger */
+function DebugLogger() { this.logs = []; this.maxLogs = 500; this.enabled = true; }
+DebugLogger.prototype.log = function(type, data) {
+  if (!this.enabled) return;
+  this.logs.push({ id: Date.now().toString(36), type: type, timestamp: new Date().toISOString(), data: data });
+  if (this.logs.length > this.maxLogs) this.logs.shift();
+};
+DebugLogger.prototype.logRequest = function(payload, model) { this.log("request", { model: model, size: JSON.stringify(payload).length }); };
+DebugLogger.prototype.logResponse = function(response, model) {
+  var u = response.usageMetadata || {};
+  this.log("response", { model: model, prompt: u.promptTokenCount, candidates: u.candidatesTokenCount, cached: u.cachedContentTokenCount || 0, total: u.totalTokenCount });
+};
+DebugLogger.prototype.logError = function(error, context) { this.log("error", { message: error.message, context: context }); };
+DebugLogger.prototype.logToolCall = function(name, args, result) { this.log("tool_call", { name: name, resultSize: JSON.stringify(result).length }); };
+DebugLogger.prototype.logThoughtSignature = function(signature, functionName) { this.log("thoughtsig", { functionName: functionName }); };
+DebugLogger.prototype.export = function() {
+  var blob = new Blob([JSON.stringify(this.logs, null, 2)], { type: "application/json" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url; a.download = "debug-logs-" + Date.now() + ".json"; a.click();
+  URL.revokeObjectURL(url);
+};
+DebugLogger.prototype.getStats = function() {
+  return {
+    requests: this.logs.filter(function(l) { return l.type === "request"; }).length,
+    errors: this.logs.filter(function(l) { return l.type === "error"; }).length,
+    totalTokens: this.logs.filter(function(l) { return l.type === "response"; }).reduce(function(s, l) { return s + (l.data.total || 0); }, 0),
+    logCount: this.logs.length
+  };
+};
+DebugLogger.prototype.clear = function() { this.logs = []; };
+
+/* Models */
+var MODELS = [
+  { group: "Gemini 3.8", items: [{ id: "gemini-3.8-flash", name: "3.8 Flash", desc: "پرچمدار" }] },
+  { group: "Gemini 3.7-3.5", items: [
+    { id: "gemini-3.7-flash", name: "3.7 Flash", desc: "سریع" },
+    { id: "gemini-3.6-flash", name: "3.6 Flash", desc: "متعادل" },
+    { id: "gemini-3.5-flash", name: "3.5 Flash", desc: "Frontier" },
+    { id: "gemini-3.5-flash-lite", name: "3.5 Flash-Lite", desc: "کم‌هزینه" }
+  ]},
+  { group: "Gemini 3.1", items: [
+    { id: "gemini-3.1-flash-lite", name: "3.1 Flash-Lite", desc: "ارزان‌ترین" },
+    { id: "gemini-3.1-pro-preview", name: "3.1 Pro", desc: "استدلال عمیق" }
+  ]},
+  { group: "Gemini 2.5", items: [
+    { id: "gemini-2.5-flash", name: "2.5 Flash", desc: "قیمت-عملکرد" },
+    { id: "gemini-2.5-pro", name: "2.5 Pro", desc: "استدلال پیشرفته" }
+  ]}
+];
+
+var PR = {
+  "gemini-3.8-flash": { sampling: false, thinking: "level", levels: ["LOW", "MEDIUM", "HIGH"], def: "MEDIUM", si: true },
+  "gemini-3.7-flash": { sampling: false, thinking: "level", levels: ["LOW", "MEDIUM", "HIGH"], def: "MEDIUM", si: true },
+  "gemini-3.6-flash": { sampling: false, thinking: "level", levels: ["LOW", "MEDIUM", "HIGH"], def: "MEDIUM", si: true },
+  "gemini-3.5-flash": { sampling: false, thinking: "level", levels: ["MINIMAL", "LOW", "MEDIUM", "HIGH"], def: "HIGH", si: true },
+  "gemini-3.5-flash-lite": { sampling: false, thinking: "level", levels: ["MINIMAL", "LOW", "MEDIUM", "HIGH"], def: "MINIMAL", si: true },
+  "gemini-3.1-flash-lite": { sampling: false, thinking: "level", levels: ["MINIMAL", "LOW", "MEDIUM", "HIGH"], def: "MINIMAL", si: true },
+  "gemini-3.1-pro-preview": { sampling: false, thinking: "level", levels: ["LOW", "MEDIUM", "HIGH"], def: "HIGH", si: true },
+  "gemini-2.5-flash": { sampling: true, thinking: "budget", range: [0, 24576], def: -1, si: true },
+  "gemini-2.5-pro": { sampling: true, thinking: "budget", range: [128, 32768], def: -1, si: true }
+};
+function getPR(id) {
+  if (PR[id]) return PR[id];
+  if (id.indexOf("gemini-3") === 0) return { sampling: false, thinking: "level", levels: ["LOW", "MEDIUM", "HIGH"], def: "MEDIUM", si: true };
+  if (id.indexOf("gemini-2.5") === 0) return { sampling: true, thinking: "budget", range: [0, 32768], def: -1, si: true };
+  return { sampling: true, thinking: "none", si: true };
+}
+
+var FALLBACK_CHAIN = [{ id: "gemini-3.1-flash-lite" }, { id: "gemini-3.5-flash" }, { id: "gemini-2.5-flash" }];
+var fallbackIndex = 0;
+var fallbackCooldown = {};
+function getActiveModel() {
+  if (!S.cfg.fallback) return S.cfg.model;
+  var now = Date.now();
+  for (var i = 0; i < FALLBACK_CHAIN.length; i++) {
+    var m = FALLBACK_CHAIN[(fallbackIndex + i) % FALLBACK_CHAIN.length];
+    if (fallbackCooldown[m.id] && fallbackCooldown[m.id] > now) continue;
+    return m.id;
+  }
+  return S.cfg.model;
+}
+function triggerFallback() {
+  if (!S.cfg.fallback) return false;
+  var model = getActiveModel();
+  fallbackCooldown[model] = Date.now() + 60000;
+  fallbackIndex = (fallbackIndex + 1) % FALLBACK_CHAIN.length;
+  return true;
+}
+
+/* API — همه از Worker عبور می‌کنند */
+function apiUrl(method, model) {
+  var base = S.cfg.workerUrl.replace(/\/+$/, "");
+  return base + "/v1beta/models/" + (model || getActiveModel()) + ":" + method;
+}
+function getHeaders() {
+  var h = { "Content-Type": "application/json" };
+  if (S.cfg.apiKey && S.cfg.apiKey.trim()) h["x-goog-api-key"] = S.cfg.apiKey.trim();
+  return h;
+}
+
+async function callGemini(payload, maxRetries) {
+  maxRetries = maxRetries || 3;
+  for (var attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      S.debug.logRequest(payload, getActiveModel());
+      S.ctrl = new AbortController();
+      var timeoutId = setTimeout(function() { if (S.ctrl) S.ctrl.abort("timeout"); }, 120000);
+      var res;
+      try {
+        res = await fetch(apiUrl("generateContent"), { method: "POST", headers: getHeaders(), body: JSON.stringify(payload), signal: S.ctrl.signal });
+      } finally { clearTimeout(timeoutId); }
+      if (res.status === 429) { S.ctrl = null; if (triggerFallback()) continue; await new Promise(function(r) { setTimeout(r, Math.pow(2, attempt) * 1000); }); continue; }
+      if (res.status >= 500) { S.ctrl = null; if (triggerFallback()) continue; await new Promise(function(r) { setTimeout(r, Math.pow(2, attempt) * 1000); }); continue; }
+      if (!res.ok) { var e = await res.json().catch(function() { return {}; }); S.ctrl = null; throw new Error((e.error && e.error.message) || ("HTTP " + res.status)); }
+      var data = await res.json();
+      S.debug.logResponse(data, getActiveModel());
+      S.ctrl = null;
+      return data;
+    } catch (err) {
+      if (err.name === "AbortError" || err === "timeout") { S.ctrl = null; throw err; }
+      if (attempt === maxRetries - 1) { S.ctrl = null; throw err; }
+      if (triggerFallback()) continue;
+      await new Promise(function(r) { setTimeout(r, Math.pow(2, attempt) * 1000); });
+    }
+  }
+  S.ctrl = null;
+  throw new Error("failed");
+}
+
+async function* sseParse(res) {
+  var reader = res.body.getReader();
+  var dec = new TextDecoder();
+  var buf = "";
+  while (true) {
+    var result = await reader.read();
+    if (result.done) break;
+    buf += dec.decode(result.value, { stream: true });
+    var lines = buf.split("\n");
+    buf = lines.pop() || "";
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (line.indexOf("data:") !== 0) continue;
+      var s = line.slice(5).trim();
+      if (!s || s === "[DONE]") continue;
+      try { yield JSON.parse(s); } catch (e) {}
+    }
+  }
+  if (buf.trim().indexOf("data:") === 0) {
+    var s2 = buf.trim().slice(5).trim();
+    if (s2 && s2 !== "[DONE]") { try { yield JSON.parse(s2); } catch (e) {} }
+  }
+}
+
+async function* streamGemini(payload, maxRetries) {
+  maxRetries = maxRetries || 2;
+  for (var attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      S.ctrl = new AbortController();
+      var timeoutId = setTimeout(function() { if (S.ctrl) S.ctrl.abort("timeout"); }, 120000);
+      var res;
+      try {
+        res = await fetch(apiUrl("streamGenerateContent") + "?alt=sse", { method: "POST", headers: getHeaders(), body: JSON.stringify(payload), signal: S.ctrl.signal });
+      } finally { clearTimeout(timeoutId); }
+      if (res.status === 429) { triggerFallback(); continue; }
+      if (!res.ok) { var e = await res.json().catch(function() { return {}; }); throw new Error((e.error && e.error.message) || ("HTTP " + res.status)); }
+      for await (var c of sseParse(res)) yield c;
+      return;
+    } catch (err) {
+      if (err.name === "AbortError" || err === "timeout") throw err;
+      if (attempt === maxRetries - 1) throw err;
+      triggerFallback();
+    }
+  }
+}
+
+function parseResp(j) {
+  var o = { text: "", thought: "", fc: [], fr: null, usage: null, cached: 0, images: [] };
+  if (j.usageMetadata) { o.usage = j.usageMetadata; o.cached = j.usageMetadata.cachedContentTokenCount || 0; }
+  var c = j.candidates && j.candidates[0];
+  if (!c) return o;
+  if (c.finishReason) o.fr = c.finishReason;
+  var parts = (c.content && c.content.parts) || [];
+  for (var i = 0; i < parts.length; i++) {
+    var p = parts[i];
+    if (p.thought && p.text) o.thought += p.text;
+    else if (p.text) o.text += p.text;
+    else if (p.functionCall) o.fc.push({ name: p.functionCall.name, args: p.functionCall.args || {}, id: p.functionCall.id, thoughtSignature: p.thoughtSignature });
+    else if (p.inlineData) o.images.push({ mime: p.inlineData.mimeType, data: p.inlineData.data });
+  }
+  return o;
+}
+
+/* Local Server */
+async function localFetch(endpoint, body) {
+  var url = S.cfg.localUrl.replace(/\/+$/, "") + endpoint;
+  var headers = { "Content-Type": "application/json" };
+  if (S.cfg.localToken) headers["Authorization"] = "Bearer " + S.cfg.localToken;
+  try {
+    var res = await fetch(url, { method: "POST", headers: headers, body: JSON.stringify(body || {}), signal: AbortSignal.timeout(65000) });
+    if (!res.ok) { var err = await res.json().catch(function() { return {}; }); throw new Error(err.detail || ("HTTP " + res.status)); }
+    return await res.json();
+  } catch (e) {
+    if (e.name === "TimeoutError") throw new Error("سرور محلی پاسخ نداد");
+    throw new Error(e.message || "خطا در اتصال");
+  }
+}
+
+async function testLocalServer() {
+  var statusEl = $("localStatus");
+  if (!statusEl) return false;
+  statusEl.className = "note"; statusEl.textContent = "در حال تست...";
+  try {
+    var url = S.cfg.localUrl.replace(/\/+$/, "") + "/health";
+    var res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}", signal: AbortSignal.timeout(5000) });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    var data = await res.json();
+    statusEl.className = "note ok";
+    statusEl.textContent = "✓ متصل — MCP: " + (data.mcp_servers || 0) + " · سندباکس: " + (data.sandbox_enabled ? "فعال" : "غیرفعال") + " · تلگرام: " + (data.telegram_enabled ? "فعال" : "غیرفعال");
+    return true;
+  } catch (e) {
+    statusEl.className = "note warn";
+    statusEl.textContent = "✗ خطا: " + e.message;
+    return false;
+  }
+}
+
+/* Search */
+async function searchTavily(q, mr) {
+  mr = mr || 5;
+  try {
+    var r = await fetch("https://api.tavily.com/search", { method: "POST", headers: { "Content-Type": "application/json", "X-Tavily-Access-Mode": "keyless" }, body: JSON.stringify({ query: q, max_results: mr }), signal: AbortSignal.timeout(10000) });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    var d = await r.json();
+    return (d.results || []).map(function(x) { return { title: x.title, url: x.url, snippet: (x.content || "").slice(0, 300), source: "tavily" }; });
+  } catch (e) { return { error: e.message, source: "tavily" }; }
+}
+async function searchSearXNG(q, mr) {
+  mr = mr || 5;
+  try {
+    var host = S.cfg.searxngHost || "http://localhost:8888";
+    var r = await fetch(host + "/search?q=" + encodeURIComponent(q) + "&format=json&limit=" + mr, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    var d = await r.json();
+    return (d.results || []).slice(0, mr).map(function(x) { return { title: x.title, url: x.url, snippet: (x.content || "").slice(0, 300), source: "searxng" }; });
+  } catch (e) { return { error: e.message, source: "searxng" }; }
+}
+async function multiSearch(args) {
+  var q = args.query || "";
+  var mr = args.max_results || 5;
+  var engines = args.engines || ["tavily", "searxng"];
+  var promises = [];
+  if (engines.indexOf("tavily") >= 0) promises.push(searchTavily(q, mr));
+  if (engines.indexOf("searxng") >= 0) promises.push(searchSearXNG(q, mr));
+  var results = await Promise.allSettled(promises);
+  var all = [], errs = [];
+  results.forEach(function(r) {
+    if (r.status === "fulfilled") {
+      if (Array.isArray(r.value)) all = all.concat(r.value);
+      else if (r.value && r.value.error) errs.push(r.value);
+    }
+  });
+  var seen = {};
+  var unique = all.filter(function(x) { var k = (x.url || "").replace(/\/+$/, "").toLowerCase(); if (seen[k]) return false; seen[k] = true; return true; });
+  return { query: q, engines_used: engines, total_raw: all.length, total_unique: unique.length, results: unique.slice(0, 10), errors: errs.length ? errs : undefined };
+}
+
+/* Sandbox & Telegram */
+async function sandboxRun(input) { return localFetch("/sandbox/run", { input: input }); }
+async function sandboxToggle(enabled) {
+  var res = await localFetch("/sandbox/toggle", { enabled: enabled });
+  S.cfg.sandboxEnabled = res.sandbox_enabled;
+  return res;
+}
+async function sandboxStatus() {
+  try {
+    var url = S.cfg.localUrl.replace(/\/+$/, "") + "/sandbox/status";
+    var res = await fetch(url, { method: "GET", headers: { "Authorization": "Bearer " + S.cfg.localToken }, signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return { enabled: false, available: false };
+    return await res.json();
+  } catch (e) { return { enabled: false, available: false }; }
+}
+async function telegramConfig(enabled, token, apiKey, model) {
+  return localFetch("/telegram/config", { enabled: enabled, token: token || undefined, geminiApiKey: apiKey || undefined, workerUrl: S.cfg.workerUrl, model: model || S.cfg.model });
+}
+async function telegramStatus() {
+  try {
+    var url = S.cfg.localUrl.replace(/\/+$/, "") + "/telegram/status";
+    var res = await fetch(url, { method: "GET", headers: { "Authorization": "Bearer " + S.cfg.localToken }, signal: AbortSignal.timeout(5000) });
+    if (!res.ok) return { enabled: false, running: false };
+    return await res.json();
+  } catch (e) { return { enabled: false, running: false }; }
+}
+async function testWorker() {
+  var note = $("workerStatus");
+  if (!note) return;
+  note.className = "note"; note.textContent = "در حال تست Worker...";
+  try {
+    var url = S.cfg.workerUrl.replace(/\/+$/, "") + "/v1beta/models";
+    var res = await fetch(url, { method: "GET", headers: getHeaders(), signal: AbortSignal.timeout(8000) });
+    if (res.ok || res.status === 404) {
+      note.className = "note ok";
+      note.textContent = "✓ Worker در دسترس است (HTTP " + res.status + ")";
+    } else if (res.status === 401 || res.status === 403) {
+      note.className = "note warn";
+      note.textContent = "⚠ Worker پاسخ داد اما کلید رد شد (" + res.status + ")";
+    } else {
+      note.className = "note warn";
+      note.textContent = "⚠ پاسخ: HTTP " + res.status;
+    }
+  } catch (err) {
+    note.className = "note warn";
+    note.textContent = "✗ خطا: " + err.message;
+  }
+}
+
+/* Tools */
+var TOOLS = {
+  get_current_time: { type: "function", name: "get_current_time", description: "دریافت تاریخ و ساعت", parameters: { type: "object", properties: { timezone: { type: "string" } }, required: [] }, exec: async function(a) { var tz = a.timezone || "UTC"; try { return { time: new Date().toLocaleString("fa-IR", { timeZone: tz }), timezone: tz }; } catch (e) { return { time: new Date().toISOString(), timezone: "UTC" }; } } },
+  calculate: { type: "function", name: "calculate", description: "محاسبات ریاضی", parameters: { type: "object", properties: { expression: { type: "string" } }, required: ["expression"] }, exec: async function(a) { var e = String(a.expression || ""); if (!/^[\d\s+\-*/().%]+$/.test(e)) return { error: "عبارت نامعتبر" }; try { return { expression: e, result: Function('"use strict"; return (' + e + ');')() }; } catch (x) { return { error: x.message }; } } },
+  web_search: { type: "function", name: "web_search", description: "جستجوی وب چندموتوره", parameters: { type: "object", properties: { query: { type: "string" }, max_results: { type: "number" } }, required: ["query"] }, exec: async function(a) { return multiSearch(a); } },
+  py_execute: { type: "function", name: "py_execute", description: "اجرای کد پایتون", parameters: { type: "object", properties: { code: { type: "string" }, timeout: { type: "number" } }, required: ["code"] }, exec: async function(a) { return localFetch("/execute", { code: a.code, timeout: a.timeout || 30 }); } },
+  terminal: { type: "function", name: "terminal", description: "اجرای دستور شل", parameters: { type: "object", properties: { command: { type: "string" }, cwd: { type: "string" } }, required: ["command"] }, exec: async function(a) { return localFetch("/terminal", { command: a.command, cwd: a.cwd }); } },
+  fs_list: { type: "function", name: "fs_list", description: "لیست فایل‌ها", parameters: { type: "object", properties: { path: { type: "string" }, recursive: { type: "boolean" } }, required: [] }, exec: async function(a) { return localFetch("/fs/list", { path: a.path || ".", recursive: !!a.recursive }); } },
+  fs_read: { type: "function", name: "fs_read", description: "خواندن فایل", parameters: { type: "object", properties: { path: { type: "string" } }, required: ["path"] }, exec: async function(a) { return localFetch("/fs/read", { path: a.path }); } },
+  fs_write: { type: "function", name: "fs_write", description: "نوشتن فایل", parameters: { type: "object", properties: { path: { type: "string" }, content: { type: "string" } }, required: ["path", "content"] }, exec: async function(a) { return localFetch("/fs/write", { path: a.path, content: a.content }); } },
+  fs_search: { type: "function", name: "fs_search", description: "جستجوی فایل", parameters: { type: "object", properties: { pattern: { type: "string" }, content: { type: "boolean" } }, required: ["pattern"] }, exec: async function(a) { return localFetch("/fs/search", { pattern: a.pattern, content: !!a.content, path: a.path || "." }); } },
+  fs_delete: { type: "function", name: "fs_delete", description: "حذف فایل", parameters: { type: "object", properties: { path: { type: "string" } }, required: ["path"] }, exec: async function(a) { return localFetch("/fs/delete", { path: a.path }); } },
+  code_index: { type: "function", name: "code_index", description: "ایندکس کد", parameters: { type: "object", properties: { path: { type: "string" }, recursive: { type: "boolean" } }, required: ["path"] }, exec: async function(a) { return codeIndexTool(a); } },
+  code_symbols: { type: "function", name: "code_symbols", description: "جستجوی نماد", parameters: { type: "object", properties: { query: { type: "string" } }, required: ["query"] }, exec: async function(a) { return codeSymbolsTool(a); } },
+  code_skeleton: { type: "function", name: "code_skeleton", description: "اسکلت فایل", parameters: { type: "object", properties: { path: { type: "string" } }, required: ["path"] }, exec: async function(a) { return codeSkeletonTool(a); } },
+  code_relevant: { type: "function", name: "code_relevant", description: "فایل‌های مرتبط", parameters: { type: "object", properties: { query: { type: "string" }, top_k: { type: "number" } }, required: ["query"] }, exec: async function(a) { return codeRelevantTool(a); } },
+  code_dependencies: { type: "function", name: "code_dependencies", description: "گراف وابستگی", parameters: { type: "object", properties: { path: { type: "string" } }, required: ["path"] }, exec: async function(a) { return codeDepsTool(a); } },
+  mcp_list: { type: "function", name: "mcp_list", description: "لیست MCP", parameters: { type: "object", properties: {}, required: [] }, exec: async function() { return localFetch("/mcp/list", {}); } },
+  mcp_install: { type: "function", name: "mcp_install", description: "نصب MCP", parameters: { type: "object", properties: { server_id: { type: "string" } }, required: ["server_id"] }, exec: async function(a) { return localFetch("/mcp/install", { server_id: a.server_id }); } },
+  mcp_start: { type: "function", name: "mcp_start", description: "شروع MCP", parameters: { type: "object", properties: { server_id: { type: "string" } }, required: ["server_id"] }, exec: async function(a) { return localFetch("/mcp/start", { server_id: a.server_id }); } },
+  mcp_health: { type: "function", name: "mcp_health", description: "سلامت MCP", parameters: { type: "object", properties: {}, required: [] }, exec: async function() { return localFetch("/mcp/health", {}); } },
+  deep_research: { type: "function", name: "deep_research", description: "تحقیقات عمیق", parameters: { type: "object", properties: { query: { type: "string" } }, required: ["query"] }, exec: async function(a) { return createDeepResearch(a.query, false); } },
+  generate_image: { type: "function", name: "generate_image", description: "تولید تصویر", parameters: { type: "object", properties: { prompt: { type: "string" } }, required: ["prompt"] }, exec: async function(a) { return generateImage(a.prompt); } },
+  text_to_speech: { type: "function", name: "text_to_speech", description: "TTS", parameters: { type: "object", properties: { text: { type: "string" } }, required: ["text"] }, exec: async function(a) { return textToSpeech(a.text); } },
+  sandbox_execute: { type: "function", name: "sandbox_execute", description: "اجرای وظیفه در سندباکس امن گوگل", parameters: { type: "object", properties: { input: { type: "string" } }, required: ["input"] }, exec: async function(a) { if (!S.cfg.sandboxEnabled) return { error: "سندباکس غیرفعال" }; return sandboxRun(a.input); } }
+};
+
+async function codeIndexTool(args) {
+  var path = args.path || ".";
+  var results = [];
+  if (/\.\w+$/.test(path)) {
+    try {
+      var r = await localFetch("/fs/read", { path: path });
+      if (r.content) { var i = S.codeIndexer.indexFile(path, r.content); if (i) results.push(i); }
+    } catch (e) { return { error: e.message }; }
+  } else {
+    try {
+      var l = await localFetch("/fs/list", { path: path, recursive: !!args.recursive });
+      var files = (l.items || []).filter(function(f) { return f.type === "file" && CODE_LANGS[(f.path.split(".").pop() || "").toLowerCase()]; }).slice(0, 200);
+      var CONCURRENCY = 10;
+      for (var i = 0; i < files.length; i += CONCURRENCY) {
+        var batch = files.slice(i, i + CONCURRENCY);
+        await Promise.allSettled(batch.map(function(f) {
+          return localFetch("/fs/read", { path: f.path }).then(function(rr) {
+            if (rr.content && !rr.truncated) {
+              var ii = S.codeIndexer.indexFile(f.path, rr.content);
+              if (ii) results.push(ii);
+            }
+          }).catch(function() {});
+        }));
+      }
+    } catch (e) { return { error: e.message }; }
+  }
+  return { indexed: results.length, total_files: Object.keys(S.codeIndexer.files).length, total_symbols: S.codeIndexer.stats.symbols, overview: S.codeIndexer.getOverview() };
+}
+async function codeSymbolsTool(a) { if (Object.keys(S.codeIndexer.files).length === 0) return { error: "ایندکس نشده" }; var r = S.codeIndexer.searchSymbol(a.query || ""); return { query: a.query, total: r.length, results: r.slice(0, 30) }; }
+async function codeSkeletonTool(a) { var p = a.path; if (!S.codeIndexer.files[p]) { try { var r = await localFetch("/fs/read", { path: p }); if (r.content) S.codeIndexer.indexFile(p, r.content); } catch (e) { return { error: e.message }; } } var s = S.codeIndexer.getSkeleton(p); return s ? { path: p, skeleton: s } : { error: "not found" }; }
+async function codeRelevantTool(a) { if (Object.keys(S.codeIndexer.files).length === 0) return { error: "ایندکس نشده" }; var r = S.codeIndexer.findRelevantFiles(a.query || "", a.top_k || S.cfg.maxRelevantFiles); return { query: a.query, results: r }; }
+async function codeDepsTool(a) { return { path: a.path, graph: S.codeIndexer.importGraph[a.path] || [] }; }
+
+/* ★ همه از Worker عبور می‌کنند */
+async function createDeepResearch(input, useMax) {
+  var url = S.cfg.workerUrl.replace(/\/+$/, "") + "/v1beta/interactions";
+  var agent = useMax ? "deep-research-max-preview-04-2026" : S.cfg.deepResearchAgent;
+  var res = await fetch(url, { method: "POST", headers: getHeaders(), body: JSON.stringify({ agent: agent, input: input, environment: { type: "remote" }, tools: [{ type: "google_search" }, { type: "url_context" }] }), signal: AbortSignal.timeout(600000) });
+  if (!res.ok) { var err = await res.json().catch(function() { return {}; }); throw new Error((err.error && err.error.message) || ("HTTP " + res.status)); }
+  return await res.json();
+}
+async function generateImage(prompt) {
+  var model = S.cfg.imageModel;
+  var url = S.cfg.workerUrl.replace(/\/+$/, "") + "/v1beta/models/" + model + ":generateContent";
+  var payload = { contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { responseModalities: ["TEXT", "IMAGE"], imageConfig: { aspectRatio: S.cfg.imageAspectRatio, imageSize: S.cfg.imageSize } } };
+  var res = await fetch(url, { method: "POST", headers: getHeaders(), body: JSON.stringify(payload), signal: AbortSignal.timeout(120000) });
+  if (!res.ok) { var err = await res.json().catch(function() { return {}; }); throw new Error((err.error && err.error.message) || ("HTTP " + res.status)); }
+  var data = await res.json();
+  var parts = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
+  return { images: parts.filter(function(p) { return p.inlineData; }).map(function(p) { return { mime: p.inlineData.mimeType, data: p.inlineData.data }; }), text: parts.filter(function(p) { return p.text; }).map(function(p) { return p.text; }).join("\n") };
+}
+async function textToSpeech(text) {
+  var model = S.cfg.ttsModel;
+  var url = S.cfg.workerUrl.replace(/\/+$/, "") + "/v1beta/models/" + model + ":generateContent";
+  var payload = { contents: [{ role: "user", parts: [{ text: text }] }], generationConfig: { responseModalities: ["AUDIO"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: S.cfg.ttsVoice } } } } };
+  var res = await fetch(url, { method: "POST", headers: getHeaders(), body: JSON.stringify(payload), signal: AbortSignal.timeout(120000) });
+  if (!res.ok) { var err = await res.json().catch(function() { return {}; }); throw new Error((err.error && err.error.message) || ("HTTP " + res.status)); }
+  var data = await res.json();
+  var parts = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
+  var part = parts.filter(function(p) { return p.inlineData; })[0];
+  if (!part) throw new Error("No audio");
+  return { mime: part.inlineData.mimeType || "audio/L16;rate=24000", data: part.inlineData.data };
+}
+async function speechToText(audioBase64, mimeType) {
+  mimeType = mimeType || "audio/wav";
+  var url = S.cfg.workerUrl.replace(/\/+$/, "") + "/v1beta/models/" + S.cfg.sttModel + ":generateContent";
+  var payload = { contents: [{ role: "user", parts: [{ inlineData: { mimeType: mimeType, data: audioBase64 } }, { text: "این فایل صوتی را به متن تبدیل کن." }] }], generationConfig: { maxOutputTokens: 4096 } };
+  var res = await fetch(url, { method: "POST", headers: getHeaders(), body: JSON.stringify(payload), signal: AbortSignal.timeout(120000) });
+  if (!res.ok) { var err = await res.json().catch(function() { return {}; }); throw new Error((err.error && err.error.message) || ("HTTP " + res.status)); }
+  var data = await res.json();
+  return { text: (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text) || "" };
+}
+
+function buildToolsList() {
+  var fns = [];
+  Object.keys(S.cfg.enabledTools).forEach(function(k) {
+    if (!S.cfg.enabledTools[k]) return;
+    var t = TOOLS[k];
+    if (!t) return;
+    fns.push({ name: t.name, description: t.description, parameters: t.parameters });
+  });
+  if (!fns.length) return [];
+  return [{ function_declarations: fns }];
+}
+
+function buildPayload(contents) {
+  var model = getActiveModel();
+  var r = getPR(model);
+  var p = { contents: contents, generationConfig: { maxOutputTokens: S.cfg.maxTokens } };
+  if (r.sampling) p.generationConfig.temperature = 1.0;
+  if (r.thinking === "level") {
+    var lv = r.levels.indexOf(S.cfg.thinkingLevel) >= 0 ? S.cfg.thinkingLevel : r.def;
+    p.generationConfig.thinkingConfig = { thinkingLevel: lv, includeThoughts: S.cfg.showThoughts };
+  } else if (r.thinking === "budget") {
+    p.generationConfig.thinkingConfig = { thinkingBudget: r.def, includeThoughts: S.cfg.showThoughts };
+  }
+  var tools = buildToolsList();
+  if (tools.length) p.tools = tools;
+  if (S.cfg.systemPrompt && S.cfg.systemPrompt.trim() && r.si !== false) {
+    p.systemInstruction = { parts: [{ text: S.cfg.systemPrompt.trim() }] };
+  }
+  return p;
+}
+
+async function tryCreateContextCache(contents, tools) {
+  if (!S.cfg.contextCaching) return null;
+  if (!S.cfg.apiKey) return null;
+  var totalLen = JSON.stringify(contents).length;
+  if (totalLen < 4000) return null;
+  var cacheKey = S.cfg.systemPrompt + "|" + JSON.stringify(tools).slice(0, 200) + "|" + totalLen;
+  if (S._cache.key === cacheKey && S._cache.name) return S._cache.name;
+  try {
+    var url = S.cfg.workerUrl.replace(/\/+$/, "") + "/v1beta/cachedContents";
+    var body = { model: "models/" + getActiveModel(), contents: contents.slice(0, Math.max(1, contents.length - 2)), ttl: (S.cfg.contextCacheTTL || 3600) + "s" };
+    if (S.cfg.systemPrompt) body.systemInstruction = { parts: [{ text: S.cfg.systemPrompt }] };
+    if (tools && tools.length) body.tools = tools;
+    var res = await fetch(url, { method: "POST", headers: getHeaders(), body: JSON.stringify(body), signal: AbortSignal.timeout(15000) });
+    if (!res.ok) return null;
+    var data = await res.json();
+    if (data && data.name) {
+      S._cache = { name: data.name, key: cacheKey };
+      return data.name;
+    }
+  } catch (e) { return null; }
+  return null;
+}
+
+/* UI */
+var BOX_CONFIG = {
+  img: { class: "box img", label: "مدیا", badge: "MEDIA", svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>' },
+  agent: { class: "box agent", label: "Antigravity", badge: "AGENT", svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>' },
+  mcp: { class: "box mcp", label: "MCP", badge: "MCP", svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>' },
+  code: { class: "box code", label: "معمار", badge: "CODE", svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>' },
+  pm: { class: "box pm", label: "مدیر", badge: "PM", badgeClass: "badge pm", svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>' },
+  sandbox: { class: "box sandbox", label: "سندباکس گوگل", badge: "SANDBOX", svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><path d="M7 8l3 3-3 3"/><path d="M13 14h4"/></svg>' },
+  default: { class: "box", label: "Agent", badge: "", svg: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>' }
+};
+
+function welcome() {
+  var sugs, title, desc, grad, key;
+  if (S.sandboxMode) { sugs = [{ t: "اسکریپت", s: "یک اسکریپت پایتون بنویس که داده‌ها را تحلیل کند" }, { t: "وب", s: "Hacker News بخوان و ۱۰ خبر برتر را خلاصه کن" }, { t: "تحقیق", s: "پیشرفت‌های AI را تحقیق کن" }, { t: "فایل", s: "یک CSV بساز و پردازش کن" }]; title = "سندباکس Gemini"; desc = "اجرای امن کد در محیط گوگل"; grad = "linear-gradient(135deg,#10b981,#4a8dff)"; key = "sandbox"; }
+  else if (S.imgMode) { sugs = [{ t: "تصویر", s: "یک گربه فضانورد بساز" }, { t: "صدا", s: "سلام دنیا را به صدا تبدیل کن" }, { t: "تحقیق", s: "تحقیق عمیق درباره AGI" }, { t: "ویدیو", s: "ویدیو غروب خورشید" }]; title = "مدیا و تحقیق"; desc = "تولید محتوا"; grad = "linear-gradient(135deg,#8b5cf6,#4a8dff)"; key = "img"; }
+  else if (S.agentMode) { sugs = [{ t: "تحلیل", s: "Hacker News را تحلیل کن" }, { t: "API", s: "یک REST API بساز" }, { t: "چارت", s: "نمودار فیبوناچی" }, { t: "بررسی", s: "اسکن امنیتی" }]; title = "Managed Agents"; desc = "Antigravity ابری"; grad = "linear-gradient(135deg,#ec4899,#a78bfa)"; key = "agent"; }
+  else if (S.mcpMode) { sugs = [{ t: "کشف", s: "ابزارهای MCP را لیست کن" }, { t: "نصب", s: "filesystem را نصب کن" }, { t: "شروع", s: "سرور filesystem را راه‌اندازی کن" }, { t: "سلامت", s: "وضعیت سرورها" }]; title = "مدیریت MCP"; desc = "کشف و نصب"; grad = "linear-gradient(135deg,#06b6d4,#4a8dff)"; key = "mcp"; }
+  else if (S.codeMode) { sugs = [{ t: "کشف", s: "کدبیس را ایندکس کن" }, { t: "یافتن", s: "تابع اصلی کجاست؟" }, { t: "بازسازی", s: "فایل اصلی را بخوان" }, { t: "باگ", s: "فایل‌های auth" }]; title = "تحلیل کد"; desc = "درک ساختار"; grad = "linear-gradient(135deg,#f59e0b,#f472b6)"; key = "code"; }
+  else if (S.pmMode) { sugs = [{ t: "پروژه", s: "یک API REST بساز" }, { t: "تحقیق", s: "درباره LLM تحقیق کن" }, { t: "تحلیل", s: "CSV را تحلیل کن" }, { t: "کد", s: "بهبود پروژه" }]; title = "مدیر پروژه"; desc = "تجزیه هدف"; grad = "linear-gradient(135deg,#a78bfa,#4a8dff)"; key = "pm"; }
+  else { sugs = [{ t: "پایتون", s: "فیبوناچی تا ۱۰۰" }, { t: "ترمینال", s: "نسخه پایتون" }, { t: "فایل", s: "لیست فایل‌ها" }, { t: "جستجو", s: "اخبار AI ۲۰۲۶" }]; title = "Gemini Agent Pro"; desc = "ایجنت کامل با پروکسی Worker"; grad = "linear-gradient(135deg,#4a8dff,#a78bfa)"; key = "default"; }
+
+  var memInfo = "";
+  if (S.cfg.stmEnabled || S.cfg.ltmEnabled) {
+    var m = [];
+    if (S.cfg.stmEnabled) m.push("STM");
+    if (S.cfg.summaryEnabled) m.push("خلاصه");
+    if (S.cfg.ltmEnabled) m.push("LTM");
+    memInfo = '<div class="note" style="margin-top:12px;text-align:start">🧠 حافظه: ' + m.join(" + ") + '</div>';
+  }
+  var proxyInfo = '<div class="note ok" style="margin-top:8px;text-align:start">🌐 پروکسی Worker: ' + esc(S.cfg.workerUrl.replace(/^https?:\/\//, "").slice(0, 40)) + '...</div>';
+  var sandboxInfo = S.cfg.sandboxEnabled ? '<div class="note sandbox" style="margin-top:8px;text-align:start">🚀 سندباکس فعال</div>' : '';
+  var codeInfo = S.cfg.codeAnalysis ? '<div class="note code" style="margin-top:8px;text-align:start">🏗️ تحلیل کد: ' + (Object.keys(S.codeIndexer.files).length ? Object.keys(S.codeIndexer.files).length + ' فایل' : 'خالی') + '</div>' : '';
+  var tgInfo = S.cfg.telegramEnabled ? '<div class="note ok" style="margin-top:8px;text-align:start">📱 بات تلگرام فعال</div>' : '';
+  var cacheInfo = (S.cfg.contextCaching && S._cache.name) ? '<div class="note ok" style="margin-top:8px;text-align:start">⚡ Context Cache فعال</div>' : '';
+
+  var icons = {
+    default: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
+    img: '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>',
+    agent: '<path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>',
+    mcp: '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>',
+    code: '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
+    pm: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>',
+    sandbox: '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/><path d="M7 8l3 3-3 3"/><path d="M13 14h4"/>'
+  };
+
+  var html = '<div class="wlc"><div class="mark" style="background:' + grad + '"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + icons[key] + '</svg></div><h1>' + title + '</h1><p>' + desc + '</p>' + proxyInfo + memInfo + sandboxInfo + codeInfo + tgInfo + cacheInfo + '<div class="sug">';
+  sugs.forEach(function(s) { html += '<button data-p="' + esc(s.s) + '"><strong>' + esc(s.t) + '</strong>' + esc(s.s) + '</button>'; });
+  html += '</div></div>';
+  streamEl.innerHTML = html;
+  streamEl.querySelectorAll(".sug button").forEach(function(b) {
+    b.onclick = function() { inputEl.value = b.dataset.p; resize(); updateActionBtn(); send(); };
+  });
+}
+
+function clearWelcome() { var w = streamEl.querySelector(".wlc"); if (w) w.remove(); }
+function addUser(text) {
+  clearWelcome();
+  var e = document.createElement("div");
+  e.className = "msg msg-u";
+  e.innerHTML = '<div class="bub">' + esc(text) + '</div>';
+  streamEl.appendChild(e); scroll();
+}
+
+function addBox(isPm, isCode, isMcp, isAgent, isImg, isSandbox) {
+  clearWelcome();
+  var key = "default";
+  if (isSandbox) key = "sandbox";
+  else if (isImg) key = "img";
+  else if (isAgent) key = "agent";
+  else if (isMcp) key = "mcp";
+  else if (isCode) key = "code";
+  else if (isPm) key = "pm";
+  var cfg = BOX_CONFIG[key];
+  var e = document.createElement("div");
+  e.className = cfg.class;
+  var badgeText = cfg.badge || esc(getActiveModel());
+  var badgeClass = cfg.badgeClass || "badge";
+  var headerHtml = cfg.svg + cfg.label + ' <span class="' + badgeClass + '">' + badgeText + '</span>';
+  e.innerHTML = '<div class="head">' + headerHtml + '</div><div class="dash" style="display:none"></div><div class="steps"></div><div class="out" style="display:none"></div>';
+  streamEl.appendChild(e); scroll();
+  return { el: e, steps: e.querySelector(".steps"), out: e.querySelector(".out"), dash: e.querySelector(".dash") };
+}
+
+var STEP_ICONS = {
+  t: { cls: "t", label: "🧠" }, tl: { cls: "tl", label: "⚙️" }, r: { cls: "r", label: "✓" },
+  f: { cls: "f", label: "📄" }, c: { cls: "c", label: "⌨️" }, e: { cls: "e", label: "✕" },
+  s: { cls: "tl", label: "🔍" }, py: { cls: "py", label: "🐍" }, term: { cls: "term", label: "💻" },
+  pm: { cls: "pm", label: "👔" }, agent: { cls: "agent", label: "🤖" }, mem: { cls: "mem", label: "🧠" },
+  code: { cls: "code", label: "🏗️" }, mcp: { cls: "mcp", label: "🔌" }, install: { cls: "install", label: "📦" },
+  thoughtsig: { cls: "thoughtsig", label: "🔐" }, img: { cls: "img", label: "🎨" }, batch: { cls: "batch", label: "⚡" },
+  sandbox: { cls: "sandbox", label: "🚀" }
+};
+function step(container, type, text, code) {
+  var ic = STEP_ICONS[type] || STEP_ICONS.t;
+  var el = document.createElement("div");
+  el.className = "step";
+  el.innerHTML = '<div class="ico ' + ic.cls + '">' + ic.label + '</div><div class="txt">' + esc(text) + (code ? '<pre>' + esc(code) + '</pre>' : '') + '</div>';
+  container.appendChild(el); scroll();
+}
+function addErr(msg) {
+  var e = document.createElement("div"); e.className = "msg err";
+  e.innerHTML = '<div class="ebox"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><div>' + esc(msg) + '</div></div>';
+  streamEl.appendChild(e); scroll();
+}
+
+async function send() {
+  if (S.busy) return;
+  var text = inputEl.value.trim();
+  if (!text) return;
+  if (S.sandboxMode) return sendSandbox(text);
+  if (S.pmMode) return sendPM(text);
+  if (S.agentMode) return sendAgentic(text);
+  if (S.imgMode) return sendMedia(text);
+  if (!S.cfg.workerUrl) { toast("Worker URL تنظیم نشده", true); openSettings(); return; }
+  if (!S.cfg.apiKey) { toast("API Key تنظیم نشده", true); openSettings(); return; }
+  addUser(text); inputEl.value = ""; resize(); updateActionBtn();
+  S.busy = true; updateActionBtn();
+  var box = addBox(false, S.codeMode, S.mcpMode, false, false, false);
+  var t0 = performance.now();
+  setConn(true, "پردازش...", "mem");
+  if (S.cfg.stmEnabled) S.mem.pushMessage("user", text);
+
+  var contents = [];
+  var memContext = S.mem.buildContext(text);
+  if (memContext) contents.push({ role: "user", parts: [{ text: "[حافظه]\n" + memContext }] });
+  if (S.cfg.stmEnabled && S.mem.stm.length > 0) {
+    for (var i = 0; i < S.mem.stm.length; i++) {
+      var m = S.mem.stm[i];
+      contents.push({ role: m.role === "user" ? "user" : "model", parts: [{ text: m.text }] });
+    }
+  }
+  var alreadyLast = contents.length > 0 && contents[contents.length - 1].role === "user" && contents[contents.length - 1].parts && contents[contents.length - 1].parts[0] && contents[contents.length - 1].parts[0].text === text;
+  if (!alreadyLast) contents.push({ role: "user", parts: [{ text: text }] });
+
+  try {
+    var round = 0, finalText = "", totalCached = 0, MAX = S.cfg.toolRounds;
+    var tools = buildToolsList();
+    var cacheName = await tryCreateContextCache(contents, tools);
+
+    while (round < MAX) {
+      round++;
+      var payload = buildPayload(contents);
+      if (cacheName) {
+        payload.cachedContent = cacheName;
+        delete payload.systemInstruction;
+        delete payload.tools;
+      }
+      var collected = { text: "", fc: [], images: [], cached: 0, thoughtLogged: false };
+      for await (var c of streamGemini(payload)) {
+        var pr = parseResp(c);
+        if (pr.cached) collected.cached = pr.cached;
+        if (pr.thought && S.cfg.showThoughts && !collected.thoughtLogged) {
+          step(box.steps, "t", pr.thought.slice(0, 400));
+          collected.thoughtLogged = true;
+        }
+        if (pr.images.length > 0) {
+          box.out.style.display = "block";
+          pr.images.forEach(function(img) {
+            var im = document.createElement("img");
+            im.src = "data:" + img.mime + ";base64," + img.data;
+            box.out.appendChild(im);
+          });
+          scroll();
+        }
+        if (pr.fc.length > 0) collected.fc = collected.fc.concat(pr.fc);
+        if (pr.text) {
+          collected.text += pr.text;
+          if (collected.fc.length === 0) {
+            box.out.style.display = "block";
+            box.out.innerHTML = md(collected.text);
+            scroll();
+          }
+        }
+      }
+      if (collected.cached) totalCached = collected.cached;
+      if (collected.fc.length > 0) {
+        box.out.innerHTML = ""; box.out.style.display = "none";
+        contents.push({ role: "model", parts: collected.fc.map(function(f) { var p = { functionCall: { name: f.name, args: f.args } }; if (f.thoughtSignature) p.thoughtSignature = f.thoughtSignature; return p; }) });
+        for (var k = 0; k < collected.fc.length; k++) {
+          var fc = collected.fc[k];
+          if (fc.thoughtSignature) {
+            S.thoughtSignatures[fc.id || fc.name] = fc.thoughtSignature;
+            S.debug.logThoughtSignature(fc.thoughtSignature, fc.name);
+            step(box.steps, "thoughtsig", "🔐 " + fc.name);
+          }
+          var tool = TOOLS[fc.name];
+          var iconType = "tl";
+          if (fc.name === "sandbox_execute") iconType = "sandbox";
+          else if (fc.name === "generate_image" || fc.name === "text_to_speech") iconType = "img";
+          else if (fc.name === "web_search") iconType = "s";
+          else if (fc.name.indexOf("mcp_") === 0) iconType = "mcp";
+          else if (fc.name.indexOf("code_") === 0) iconType = "code";
+          else if (fc.name === "py_execute") iconType = "py";
+          else if (fc.name === "terminal") iconType = "term";
+          else if (fc.name.indexOf("fs_") === 0) iconType = "f";
+          step(box.steps, iconType, fc.name + "(" + JSON.stringify(fc.args).slice(0, 150) + ")");
+          var res;
+          try { res = tool && tool.exec ? await tool.exec(fc.args || {}) : { error: "ناشناخته" }; }
+          catch (e) { res = { error: e.message }; }
+          S.debug.logToolCall(fc.name, fc.args, res);
+          step(box.steps, "r", JSON.stringify(res).slice(0, 600));
+          contents.push({ role: "user", parts: [{ functionResponse: { name: fc.name, response: res } }] });
+        }
+        continue;
+      }
+      if (collected.text) {
+        finalText = collected.text;
+        contents.push({ role: "model", parts: [{ text: finalText }] });
+        box.out.style.display = "block";
+        box.out.innerHTML = md(finalText);
+        break;
+      }
+      break;
+    }
+    if (!finalText && !box.out.innerHTML) {
+      box.out.style.display = "block";
+      box.out.innerHTML = md("(پاسخی دریافت نشد)");
+    }
+    if (S.cfg.stmEnabled && finalText) S.mem.pushMessage("model", finalText);
+    if (S.cfg.ltmEnabled && finalText) S.mem.extractFacts([{ role: "user", text: text }, { role: "model", text: finalText }]).catch(function() {});
+    if (S.cfg.showStats) {
+      var el = Math.round(performance.now() - t0);
+      var metaDiv = document.createElement("div");
+      metaDiv.className = "meta";
+      var ps = [el + " ms", round + " دور", getActiveModel()];
+      if (totalCached > 0) ps.push("✓ " + totalCached + " کش");
+      if (cacheName) ps.push("⚡ context-cache");
+      metaDiv.textContent = ps.join(" · ");
+      box.el.appendChild(metaDiv);
+    }
+    setConn(true, "آماده", "mem");
+  } catch (e) {
+    S.debug.logError(e, {});
+    if (e.name === "AbortError" || e === "timeout") { toast("متوقف", true); setConn(true, "متوقف"); }
+    else { addErr(e.message || "خطا"); setConn(false, "خطا"); }
+  } finally {
+    S.busy = false; updateActionBtn(); S.ctrl = null; scroll();
+  }
+}
+
+async function sendSandbox(text) {
+  if (!S.cfg.workerUrl || !S.cfg.apiKey) { toast("تنظیمات ناقص", true); openSettings(); return; }
+  if (!S.cfg.sandboxEnabled) { toast("سندباکس غیرفعال", true); return; }
+  addUser(text); inputEl.value = ""; resize(); updateActionBtn();
+  S.busy = true; updateActionBtn();
+  var box = addBox(false, false, false, false, false, true);
+  var t0 = performance.now();
+  setConn(true, "سندباکس...", "sandbox");
+  try {
+    step(box.steps, "sandbox", "🚀 اجرا در سندباکس گوگل از طریق Worker");
+    step(box.steps, "sandbox", "وظیفه: " + text.slice(0, 200));
+    var r = await sandboxRun(text);
+    if (r.error) { step(box.steps, "e", "خطا: " + r.error); addErr(r.error); }
+    else {
+      var out = r.output_text || r.output || JSON.stringify(r);
+      if (r.steps && Array.isArray(r.steps)) {
+        r.steps.forEach(function(s) {
+          if (s.type === "code_execution") step(box.steps, "py", "اجرای کد");
+          else if (s.type === "tool_call") step(box.steps, "tl", "ابزار: " + (s.name || "?"));
+          else if (s.type === "file_write") step(box.steps, "f", "فایل: " + (s.path || "?"));
+        });
+      }
+      box.out.style.display = "block";
+      box.out.innerHTML = md(out);
+      if (S.cfg.stmEnabled) S.mem.pushMessage("model", out);
+    }
+    if (S.cfg.showStats) { var el = Math.round(performance.now() - t0); var m = document.createElement("div"); m.className = "meta"; m.textContent = el + " ms · Sandbox"; box.el.appendChild(m); }
+    setConn(true, "آماده", "sandbox");
+  } catch (e) { addErr(e.message || "خطا"); setConn(false, "خطا"); }
+  finally { S.busy = false; updateActionBtn(); scroll(); }
+}
+
+async function sendAgentic(text) {
+  if (!S.cfg.workerUrl || !S.cfg.apiKey) { toast("تنظیمات ناقص", true); openSettings(); return; }
+  addUser(text); inputEl.value = ""; resize(); updateActionBtn();
+  S.busy = true; updateActionBtn();
+  var box = addBox(false, false, false, true, false, false);
+  var t0 = performance.now();
+  setConn(true, "Agentic...", "agent");
+  try {
+    step(box.steps, "agent", "🚀 " + S.cfg.antigravityAgent);
+    var r = await sandboxRun(text);
+    var out = r.output_text || JSON.stringify(r);
+    box.out.style.display = "block"; box.out.innerHTML = md(out);
+    if (S.cfg.showStats) { var el = Math.round(performance.now() - t0); var m = document.createElement("div"); m.className = "meta"; m.textContent = el + " ms · Agent"; box.el.appendChild(m); }
+    setConn(true, "آماده", "agent");
+  } catch (e) { addErr(e.message || "خطا"); setConn(false, "خطا"); }
+  finally { S.busy = false; updateActionBtn(); scroll(); }
+}
+
+async function sendMedia(text) {
+  if (!S.cfg.workerUrl || !S.cfg.apiKey) { toast("تنظیمات ناقص", true); openSettings(); return; }
+  addUser(text); inputEl.value = ""; resize(); updateActionBtn();
+  S.busy = true; updateActionBtn();
+  var box = addBox(false, false, false, false, true, false);
+  var t0 = performance.now();
+  setConn(true, "مدیا...", "img");
+  try {
+    var lower = text.toLowerCase();
+    var hasAction = ["بساز", "تولید", "generate", "create", "make"].some(function(v) { return lower.indexOf(v) >= 0; });
+    var imgKeys = ["تصویر", "عکس", "image"];
+    var audioKeys = ["صدا", "گفتار", "audio", "tts"];
+    var handled = false;
+    if (S.cfg.imageGen && imgKeys.some(function(k) { return lower.indexOf(k) >= 0; }) && hasAction) {
+      step(box.steps, "img", "🎨 تولید تصویر از طریق Worker");
+      var r = await generateImage(text);
+      box.out.style.display = "block";
+      if (r.text) box.out.innerHTML = md(r.text);
+      r.images.forEach(function(img) {
+        var im = document.createElement("img");
+        im.src = "data:" + img.mime + ";base64," + img.data;
+        box.out.appendChild(im);
+        S.mediaResults.push({ type: "image", data: img });
+      });
+      handled = true;
+    } else if (S.cfg.ttsEnabled && audioKeys.some(function(k) { return lower.indexOf(k) >= 0; }) && hasAction) {
+      step(box.steps, "img", "🔊 TTS از طریق Worker");
+      var r2 = await textToSpeech(text);
+      box.out.style.display = "block";
+      var audio = document.createElement("audio");
+      audio.controls = true;
+      audio.src = "data:" + r2.mime + ";base64," + r2.data;
+      box.out.appendChild(audio);
+      S.mediaResults.push({ type: "audio", data: r2 });
+      handled = true;
+    }
+    if (!handled) {
+      step(box.steps, "t", "درخواست عمومی از طریق Worker");
+      var p = buildPayload([{ role: "user", parts: [{ text: text }] }]);
+      var r3 = await callGemini(p); var pr = parseResp(r3);
+      box.out.style.display = "block"; box.out.innerHTML = md(pr.text || "(بدون پاسخ)");
+    }
+    if (S.cfg.showStats) { var el = Math.round(performance.now() - t0); var m = document.createElement("div"); m.className = "meta"; m.textContent = el + " ms"; box.el.appendChild(m); }
+    setConn(true, "آماده", "img");
+  } catch (e) { addErr(e.message || "خطا"); setConn(false, "خطا"); }
+  finally { S.busy = false; updateActionBtn(); scroll(); }
+}
+
+async function sendPM(text) {
+  if (!S.cfg.workerUrl || !S.cfg.apiKey) { toast("تنظیمات ناقص", true); openSettings(); return; }
+  addUser(text); inputEl.value = ""; resize(); updateActionBtn();
+  S.busy = true; updateActionBtn();
+  setConn(true, "مدیر پروژه...", "pm");
+  var box = addBox(true, false, false, false, false, false);
+  var t0 = performance.now();
+  try {
+    step(box.steps, "pm", "تجزیه هدف...");
+    var payload = buildPayload([{ role: "user", parts: [{ text: 'هدف را به حداکثر ۴ وظیفه تقسیم کن. JSON: [{"id":1,"type":"researcher","description":"...","priority":5}]\n\nهدف: ' + text }] }]);
+    var res = await callGemini(payload);
+    var parseText = (res.candidates && res.candidates[0] && res.candidates[0].content && res.candidates[0].content.parts && res.candidates[0].content.parts[0] && res.candidates[0].content.parts[0].text) || "[]";
+    var clean = parseText.replace(/```json|```/g, "").trim();
+    var tasks = [];
+    try { tasks = JSON.parse(clean); } catch (e) { tasks = [{ id: 1, type: "researcher", description: text, priority: 1 }]; }
+    if (!Array.isArray(tasks)) tasks = [tasks];
+    step(box.steps, "pm", tasks.length + " وظیفه");
+    var results = [];
+    for (var i = 0; i < tasks.length; i++) {
+      var task = tasks[i];
+      step(box.steps, "agent", "وظیفه " + (i + 1) + ": " + (task.description || "").slice(0, 80));
+      var p2 = buildPayload([{ role: "user", parts: [{ text: "وظیفه: " + task.description }] }]);
+      var r2 = await callGemini(p2);
+      var pr2 = parseResp(r2);
+      results.push("### " + (task.type || "task") + "\n" + (pr2.text || ""));
+    }
+    var sum = results.join("\n\n---\n\n");
+    box.out.style.display = "block"; box.out.innerHTML = md(sum);
+    if (S.cfg.stmEnabled) S.mem.pushMessage("model", sum);
+    if (S.cfg.showStats) { var el = Math.round(performance.now() - t0); var m = document.createElement("div"); m.className = "meta"; m.textContent = el + " ms · " + tasks.length + " ایجنت"; box.el.appendChild(m); }
+    setConn(true, "آماده", "mem");
+  } catch (e) { addErr(e.message || "خطا"); setConn(false, "خطا"); }
+  finally { S.busy = false; updateActionBtn(); scroll(); }
+}
+
+/* Modals */
+function openSettings() { modal.classList.add("open"); scrim.classList.add("open"); renderSettingsContent(); }
+function closeSettings() { modal.classList.remove("open"); scrim.classList.remove("open"); }
+
+function openMemModal() {
+  var b = $("memBody"); var s = S.mem.getStats(); var f = S.mem.ltm || [];
+  var h = '<div class="dash"><div class="card"><div class="lbl">STM</div><div class="val">' + s.stm + "/" + s.stmMax + '</div></div><div class="card"><div class="lbl">خلاصه</div><div class="val ag">' + s.summary + '</div></div><div class="card"><div class="lbl">LTM</div><div class="val ok">' + s.ltm + '</div></div></div>';
+  if (S.mem.summary) h += '<div class="fld"><label>خلاصه</label><div class="note">' + esc(S.mem.summary) + '</div></div>';
+  if (f.length) {
+    h += '<div class="fld"><label>حقایق (' + f.length + ')</label>';
+    f.slice().reverse().slice(0, 50).forEach(function(x) { h += '<div style="padding:8px 10px;background:var(--s2);border-radius:8px;margin-bottom:4px;font-size:12px">' + esc(x.content) + '</div>'; });
+    h += '</div>';
+  } else h += '<div class="note">خالی</div>';
+  b.innerHTML = h; memModal.classList.add("open"); memScrim.classList.add("open");
+}
+function closeMemModal() { memModal.classList.remove("open"); memScrim.classList.remove("open"); }
+
+function openCodeModal() {
+  var b = $("codeBody"); var o = S.codeIndexer.getOverview();
+  var h = '<div class="dash"><div class="card"><div class="lbl">فایل</div><div class="val">' + o.files + '</div></div><div class="card"><div class="lbl">نماد</div><div class="val ac">' + o.symbols + '</div></div><div class="card"><div class="lbl">توکن</div><div class="val ok">' + o.tokens + '</div></div></div>';
+  if (!o.files) h += '<div class="note code">خالی</div>';
+  b.innerHTML = h; codeModal.classList.add("open"); codeScrim.classList.add("open");
+}
+function closeCodeModal() { codeModal.classList.remove("open"); codeScrim.classList.remove("open"); }
+
+async function openMcpModal() {
+  var b = $("mcpBody"); b.innerHTML = '<div class="note mcp">بارگذاری...</div>';
+  mcpModal.classList.add("open"); mcpScrim.classList.add("open");
+  try {
+    var d = await localFetch("/mcp/list", {});
+    var servers = d.servers || [];
+    if (!servers.length) { b.innerHTML = '<div class="note mcp">سروری نیست. سرور پایتون را اجرا کنید.</div>'; return; }
+    var h = '<div class="dash"><div class="card"><div class="lbl">کل</div><div class="val mcp">' + servers.length + '</div></div><div class="card"><div class="lbl">فعال</div><div class="val ok">' + servers.filter(function(x) { return x.enabled; }).length + '</div></div></div>';
+    servers.forEach(function(x) {
+      h += '<div class="mcp-item"><div class="mcp-head"><div class="mcp-name">' + esc(x.name) + '</div><span class="mcp-type">' + esc(x.category) + '</span></div><div class="mcp-desc">' + esc(x.description) + '</div><div class="mcp-actions">'
+        + (x.status === "not_installed" ? '<button class="primary" onclick="window.__mcpAction(\'install\',\'' + x.id + '\')">📦 نصب</button>' : '')
+        + ((x.status === "installed" || x.status === "healthy" || x.status === "running") && !x.enabled ? '<button class="primary" onclick="window.__mcpAction(\'start\',\'' + x.id + '\')">▶️ شروع</button>' : '')
+        + (x.enabled ? '<button class="danger" onclick="window.__mcpAction(\'stop\',\'' + x.id + '\')">⏹ توقف</button>' : '')
+        + '</div></div>';
+    });
+    b.innerHTML = h;
+  } catch (e) { b.innerHTML = '<div class="note warn">خطا: ' + esc(e.message) + '</div>'; }
+}
+async function mcpActionInternal(a, id) {
+  try {
+    if (a === "install") { toast("نصب..."); var r = await localFetch("/mcp/install", { server_id: id }); if (r.success === false) toast("ناموفق", true); else toast("نصب شد"); }
+    else if (a === "start") { toast("شروع..."); var r2 = await localFetch("/mcp/start", { server_id: id }); if (r2.success === false) toast("ناموفق", true); else toast("شروع شد"); }
+    else if (a === "stop") { await localFetch("/mcp/stop", { server_id: id }); toast("توقف"); }
+    openMcpModal();
+  } catch (e) { toast(e.message, true); }
+}
+window.__mcpAction = mcpActionInternal;
+function closeMcpModal() { mcpModal.classList.remove("open"); mcpScrim.classList.remove("open"); }
+
+function openAgentModal() {
+  var b = $("agentBody"); var s = S.agentSession;
+  b.innerHTML = '<div class="dash"><div class="card"><div class="lbl">Session</div><div class="val agent">' + (s.interactionId ? "Active" : "None") + '</div></div><div class="card"><div class="lbl">Steps</div><div class="val">' + s.steps.length + '</div></div></div>';
+  agentModal.classList.add("open"); agentScrim.classList.add("open");
+}
+function closeAgentModal() { agentModal.classList.remove("open"); agentScrim.classList.remove("open"); }
+
+function openImgModal() {
+  var b = $("imgBody");
+  var h = '<div class="dash"><div class="card"><div class="lbl">نتایج</div><div class="val img">' + S.mediaResults.length + '</div></div></div>';
+  h += '<div class="fld"><label>تنظیمات مدیا</label>';
+  h += '<div class="srow"><div class="txt"><div class="t">Image Gen</div></div><button class="tog img ' + (S.cfg.imageGen ? "on" : "") + '" data-cfg="imageGen"></button></div>';
+  h += '<div class="srow" style="margin-top:6px"><div class="txt"><div class="t">TTS</div></div><button class="tog img ' + (S.cfg.ttsEnabled ? "on" : "") + '" data-cfg="ttsEnabled"></button></div>';
+  h += '<div class="srow" style="margin-top:6px"><div class="txt"><div class="t">STT (میکروفون)</div></div><button class="tog img ' + (S.cfg.sttEnabled ? "on" : "") + '" data-cfg="sttEnabled"></button></div>';
+  h += '<div class="srow" style="margin-top:6px"><div class="txt"><div class="t">Context Caching</div></div><button class="tog img ' + (S.cfg.contextCaching ? "on" : "") + '" data-cfg="contextCaching"></button></div>';
+  h += '</div>';
+  b.innerHTML = h;
+  b.querySelectorAll("[data-cfg]").forEach(function(el) {
+    el.onclick = function() {
+      var k = el.dataset.cfg;
+      S.cfg[k] = !S.cfg[k];
+      el.classList.toggle("on", S.cfg[k]);
+      try { localStorage.setItem("gemini-agent-cfg", JSON.stringify(S.cfg)); } catch (e) {}
+    };
+  });
+  imgModal.classList.add("open"); imgScrim.classList.add("open");
+}
+function closeImgModal() { imgModal.classList.remove("open"); imgScrim.classList.remove("open"); }
+
+function openDbgModal() {
+  var b = $("dbgBody"); var s = S.debug.getStats();
+  b.innerHTML = '<div class="dash"><div class="card"><div class="lbl">Requests</div><div class="val">' + s.requests + '</div></div><div class="card"><div class="lbl">Errors</div><div class="val">' + s.errors + '</div></div><div class="card"><div class="lbl">توکن</div><div class="val ag">' + s.totalTokens + '</div></div></div>';
+  dbgModal.classList.add("open"); dbgScrim.classList.add("open");
+}
+function closeDbgModal() { dbgModal.classList.remove("open"); dbgScrim.classList.remove("open"); }
+
+function openPysModal() {
+  var view = $("pysCodeView");
+  if (view) view.textContent = S.pythonCode;
+  pysModal.classList.add("open"); pysScrim.classList.add("open");
+}
+function closePysModal() { pysModal.classList.remove("open"); pysScrim.classList.remove("open"); }
+function downloadPythonServer() {
+  var blob = new Blob([S.pythonCode], { type: "text/x-python;charset=utf-8" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url; a.download = "agent_server.py";
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast("دانلود شد");
+}
+
+/* Settings */
+function collectCurrentTab() {
+  var e = function(id) { return document.getElementById(id); };
+  var t = S.setTab;
+  if (t === "api") {
+    if (e("cWorker")) S.cfg.workerUrl = e("cWorker").value.trim();
+    if (e("cKey")) S.cfg.apiKey = e("cKey").value.trim();
+    if (e("cLocalUrl")) S.cfg.localUrl = e("cLocalUrl").value.trim();
+    if (e("cLocalToken")) S.cfg.localToken = e("cLocalToken").value.trim();
+    if (e("cModel")) S.cfg.model = e("cModel").value;
+    if (e("cSys")) S.cfg.systemPrompt = e("cSys").value;
+    if (e("cThink")) S.cfg.thinkingLevel = e("cThink").value;
+    if (e("cMax")) S.cfg.maxTokens = parseInt(e("cMax").value, 10) || 8192;
+  } else if (t === "sandbox") {
+    if (e("cSandboxAgent")) S.cfg.antigravityAgent = e("cSandboxAgent").value;
+    if (e("cTelegramToken")) S.cfg.telegramToken = e("cTelegramToken").value.trim();
+  } else if (t === "memory") {
+    if (e("cSTMSize")) S.cfg.stmMaxMessages = parseInt(e("cSTMSize").value, 10) || 8;
+    if (e("cLTMSize")) S.cfg.ltmMaxItems = parseInt(e("cLTMSize").value, 10) || 100;
+  } else if (t === "code") {
+    if (e("cSkeletonThreshold")) S.cfg.skeletonThreshold = parseInt(e("cSkeletonThreshold").value, 10) || 5000;
+    if (e("cMaxRelevant")) S.cfg.maxRelevantFiles = parseInt(e("cMaxRelevant").value, 10) || 5;
+  } else if (t === "pm") {
+    if (e("cPMBudget")) S.cfg.pmBudget = parseInt(e("cPMBudget").value, 10) || 50000;
+    if (e("cPMMaxAgents")) S.cfg.pmMaxAgents = parseInt(e("cPMMaxAgents").value, 10) || 4;
+  }
+}
+
+function renderSettingsContent() {
+  var c = $("setContent"); var t = S.setTab; var h = "";
+  if (t === "api") {
+    h += '<div class="note ok" style="margin-bottom:12px">🌐 همه ابزارهای گوگل از این Worker عبور می‌کنند (دور زدن تحریم)</div>';
+    h += '<div class="fld"><label>آدرس Worker (پروکسی Cloudflare)</label><input type="text" id="cWorker" dir="ltr"></div>';
+    h += '<div class="fld"><label>API Key گوگل</label><input type="password" id="cKey" dir="ltr" placeholder="AQ...."></div>';
+    h += '<div class="fld"><div class="srow"><div class="txt"><div class="t">تست Worker</div><div class="d">بررسی دسترسی به پروکسی</div></div><button class="tog" id="cWorkerTest" style="width:auto;padding:0 14px;border-radius:99px;font-size:11.5px;font-weight:650">تست</button></div><div class="note" id="workerStatus" style="margin-top:6px">—</div></div>';
+    h += '<div class="fld"><label>مدل</label><div class="sw"><select id="cModel"></select></div></div>';
+    h += '<div class="fld"><label>سرور محلی</label><input type="text" id="cLocalUrl" dir="ltr"></div>';
+    h += '<div class="fld"><label>توکن سرور</label><input type="password" id="cLocalToken" dir="ltr"></div>';
+    h += '<div class="fld"><div class="srow"><div class="txt"><div class="t">تست سرور محلی</div></div><button class="tog" id="cLocalTest" style="width:auto;padding:0 14px;border-radius:99px;font-size:11.5px;font-weight:650">تست</button></div><div class="note" id="localStatus" style="margin-top:6px">وضعیت: —</div></div>';
+    h += '<div class="fld"><label>System Prompt</label><textarea id="cSys" rows="3"></textarea></div>';
+    h += '<div class="fld"><label>سطح تفکر</label><div class="sw"><select id="cThink"><option value="MINIMAL">MINIMAL</option><option value="LOW">LOW</option><option value="MEDIUM" selected>MEDIUM</option><option value="HIGH">HIGH</option></select></div></div>';
+    h += '<div class="fld"><label>حداکثر توکن</label><input type="number" id="cMax" min="256" max="65536" step="256"></div>';
+  } else if (t === "sandbox") {
+    h += '<div class="note sandbox" style="margin-bottom:12px">🚀 <strong>سندباکس گوگل (Antigravity)</strong><br>از Worker شما به عنوان پروکسی استفاده می‌کند.</div>';
+    h += '<div class="fld"><div class="srow"><div class="txt"><div class="t">فعال‌سازی سندباکس</div></div><button class="tog sandbox ' + (S.cfg.sandboxEnabled ? "on" : "") + '" id="cSandboxEnabled"></button></div></div>';
+    h += '<div class="fld"><label>Agent ID</label><div class="sw"><select id="cSandboxAgent"><option value="antigravity-preview-05-2026">antigravity-preview-05-2026</option></select></div></div>';
+    h += '<div class="fld"><label>وضعیت</label><div class="note" id="sandboxStatusNote">—</div></div>';
+    h += '<button class="dlbtn" id="checkSandboxBtn" style="margin-bottom:12px">🔍 بررسی وضعیت سندباکس</button>';
+    h += '<div class="fld"><label>📱 بات تلگرام</label></div>';
+    h += '<div class="fld"><div class="srow"><div class="txt"><div class="t">فعال‌سازی بات</div></div><button class="tog sandbox ' + (S.cfg.telegramEnabled ? "on" : "") + '" id="cTelegramEnabled"></button></div></div>';
+    h += '<div class="fld"><label>توکن بات</label><input type="text" id="cTelegramToken" dir="ltr" placeholder="123456:ABC..."></div>';
+    h += '<div class="note" style="margin-bottom:10px">از <code>@BotFather</code> دریافت کنید (رمزنگاری‌شده).</div>';
+    h += '<div class="fld"><label>وضعیت تلگرام</label><div class="note" id="telegramStatusNote">—</div></div>';
+    h += '<button class="dlbtn" id="checkTgBtn" style="margin-bottom:8px">🔍 بررسی تلگرام</button>';
+    h += '<button class="dlbtn" id="restartTgBtn">🔄 راه‌اندازی مجدد</button>';
+  } else if (t === "agentic") {
+    h += '<div class="fld"><div class="srow"><div class="txt"><div class="t">Managed Agents</div></div><button class="tog agent" id="cManagedAgents"></button></div></div>';
+    h += '<div class="fld"><div class="srow"><div class="txt"><div class="t">Structured Output</div></div><button class="tog agent" id="cStructuredOutput"></button></div></div>';
+    h += '<div class="fld"><div class="srow"><div class="txt"><div class="t">Parallel Function Calling</div></div><button class="tog agent" id="cParallelFC"></button></div></div>';
+    h += '<div class="fld"><div class="srow"><div class="txt"><div class="t">Context Caching</div><div class="d">کاهش هزینه برای محتوای تکراری</div></div><button class="tog agent" id="cCache"></button></div></div>';
+    h += '<div class="fld"><div class="srow"><div class="txt"><div class="t">Fallback</div></div><button class="tog agent" id="cFallback"></button></div></div>';
+    h += '<div class="fld"><div class="srow"><div class="txt"><div class="t">نمایش افکار</div></div><button class="tog agent" id="cThoughts"></button></div></div>';
+    h += '<div class="fld"><div class="srow"><div class="txt"><div class="t">نمایش آمار</div></div><button class="tog agent" id="cStats"></button></div></div>';
+    h += '<div class="fld"><div class="srow"><div class="txt"><div class="t">Debug Logger</div></div><button class="tog agent" id="cDebug"></button></div></div>';
+  } else if (t === "memory") {
+    h += '<div class="fld"><div class="srow"><div class="txt"><div class="t">STM</div></div><button class="tog" id="cSTM"></button></div></div>';
+    h += '<div class="fld"><div class="srow"><div class="txt"><div class="t">خلاصه چرخشی</div></div><button class="tog" id="cSummary"></button></div></div>';
+    h += '<div class="fld"><div class="srow"><div class="txt"><div class="t">LTM</div></div><button class="tog" id="cLTM"></button></div></div>';
+    h += '<div class="fld"><label>حداکثر پیام STM</label><input type="number" id="cSTMSize" min="2" max="20"></div>';
+    h += '<div class="fld"><label>حداکثر LTM</label><input type="number" id="cLTMSize" min="10" max="500"></div>';
+  } else if (t === "code") {
+    h += '<div class="fld"><div class="srow"><div class="txt"><div class="t">تحلیل کد</div></div><button class="tog code" id="cCodeAnalysis"></button></div></div>';
+    h += '<div class="fld"><label>آستانه اسکلت</label><input type="number" id="cSkeletonThreshold" min="500" max="50000" step="500"></div>';
+    h += '<div class="fld"><label>حداکثر فایل مرتبط</label><input type="number" id="cMaxRelevant" min="1" max="20"></div>';
+    h += '<button class="dlbtn code" id="reindexBtn">ایندکس مجدد</button>';
+    h += '<div class="note code" id="codeIndexStatus" style="margin-top:8px">—</div>';
+  } else if (t === "media") {
+    h += '<div class="fld"><div class="srow"><div class="txt"><div class="t">تولید تصویر</div></div><button class="tog img" id="cImageGen"></button></div></div>';
+    h += '<div class="fld"><div class="srow"><div class="txt"><div class="t">TTS</div></div><button class="tog img" id="cTtsEnabled"></button></div></div>';
+    h += '<div class="fld"><div class="srow"><div class="txt"><div class="t">STT (میکروفون)</div></div><button class="tog img" id="cSttEnabled"></button></div></div>';
+  } else if (t === "pm") {
+    h += '<div class="fld"><div class="srow"><div class="txt"><div class="t">حالت مدیر پروژه</div></div><button class="tog" id="cPMEnabled"></button></div></div>';
+    h += '<div class="fld"><label>بودجه توکن</label><input type="number" id="cPMBudget" min="5000" max="500000" step="5000"></div>';
+    h += '<div class="fld"><label>حداکثر ایجنت</label><input type="number" id="cPMMaxAgents" min="1" max="8"></div>';
+  } else if (t === "safety") {
+    h += '<div class="fld"><label>Harassment</label><div class="sw"><select id="cSafH"><option value="BLOCK_NONE">None</option><option value="BLOCK_MEDIUM_AND_ABOVE">Medium+</option></select></div></div>';
+    h += '<div class="fld"><label>Hate</label><div class="sw"><select id="cSafHat"><option value="BLOCK_NONE">None</option><option value="BLOCK_MEDIUM_AND_ABOVE">Medium+</option></select></div></div>';
+    h += '<div class="fld"><label>Sexual</label><div class="sw"><select id="cSafS"><option value="BLOCK_NONE">None</option><option value="BLOCK_MEDIUM_AND_ABOVE">Medium+</option></select></div></div>';
+    h += '<div class="fld"><label>Dangerous</label><div class="sw"><select id="cSafD"><option value="BLOCK_NONE">None</option><option value="BLOCK_MEDIUM_AND_ABOVE">Medium+</option></select></div></div>';
+  } else if (t === "tools") {
+    h += '<div class="tgrid" id="tGrid"></div>';
+  }
+  c.innerHTML = h;
+  bindSettingsContent();
+}
+
+function bindSettingsContent() {
+  var e = function(id) { return document.getElementById(id); };
+  if (e("cWorker")) e("cWorker").value = S.cfg.workerUrl;
+  if (e("cKey")) e("cKey").value = S.cfg.apiKey;
+  if (e("cLocalUrl")) e("cLocalUrl").value = S.cfg.localUrl;
+  if (e("cLocalToken")) e("cLocalToken").value = S.cfg.localToken;
+  if (e("cSys")) e("cSys").value = S.cfg.systemPrompt;
+  if (e("cThink")) e("cThink").value = S.cfg.thinkingLevel;
+  if (e("cMax")) e("cMax").value = S.cfg.maxTokens;
+  if (e("cSTMSize")) e("cSTMSize").value = S.cfg.stmMaxMessages;
+  if (e("cLTMSize")) e("cLTMSize").value = S.cfg.ltmMaxItems;
+  if (e("cSkeletonThreshold")) e("cSkeletonThreshold").value = S.cfg.skeletonThreshold;
+  if (e("cMaxRelevant")) e("cMaxRelevant").value = S.cfg.maxRelevantFiles;
+  if (e("cPMBudget")) e("cPMBudget").value = S.cfg.pmBudget;
+  if (e("cPMMaxAgents")) e("cPMMaxAgents").value = S.cfg.pmMaxAgents;
+  if (e("cTelegramToken")) e("cTelegramToken").value = S.cfg.telegramToken;
+  if (e("cModel")) {
+    var sel = e("cModel");
+    sel.innerHTML = MODELS.map(function(g) {
+      return '<optgroup label="' + esc(g.group) + '">' + g.items.map(function(m) {
+        return '<option value="' + m.id + '"' + (m.id === S.cfg.model ? " selected" : "") + '>' + esc(m.name) + '</option>';
+      }).join("") + '</optgroup>';
+    }).join("");
+  }
+  var toggles = [
+    ["cManagedAgents", "managedAgents"], ["cStructuredOutput", "structuredOutput"],
+    ["cParallelFC", "parallelFC"], ["cCache", "contextCaching"],
+    ["cFallback", "fallback"], ["cThoughts", "showThoughts"],
+    ["cStats", "showStats"], ["cDebug", "debug"],
+    ["cSTM", "stmEnabled"], ["cSummary", "summaryEnabled"], ["cLTM", "ltmEnabled"],
+    ["cCodeAnalysis", "codeAnalysis"], ["cPMEnabled", "pmEnabled"],
+    ["cImageGen", "imageGen"], ["cTtsEnabled", "ttsEnabled"], ["cSttEnabled", "sttEnabled"],
+    ["cSandboxEnabled", "sandboxEnabled"], ["cTelegramEnabled", "telegramEnabled"]
+  ];
+  toggles.forEach(function(pair) {
+    var el = e(pair[0]);
+    if (el) {
+      el.classList.toggle("on", !!S.cfg[pair[1]]);
+      el.onclick = function() {
+        S.cfg[pair[1]] = !S.cfg[pair[1]];
+        el.classList.toggle("on", S.cfg[pair[1]]);
+        try { localStorage.setItem("gemini-agent-cfg", JSON.stringify(S.cfg)); } catch (ex) {}
+        if (pair[0] === "cSandboxEnabled") sandboxToggle(S.cfg.sandboxEnabled).catch(function() {});
+        if (pair[0] === "cTelegramEnabled") telegramConfig(S.cfg.telegramEnabled, S.cfg.telegramToken, S.cfg.apiKey, S.cfg.model).catch(function() {});
+        if (pair[0] === "cCache" && !S.cfg.contextCaching) S._cache = { name: null, key: null };
+      };
+    }
+  });
+  if (e("cWorkerTest")) e("cWorkerTest").onclick = testWorker;
+  if (e("cLocalTest")) e("cLocalTest").onclick = testLocalServer;
+  if (e("reindexBtn")) e("reindexBtn").onclick = async function() {
+    try {
+      var r = await codeIndexTool({ path: ".", recursive: true });
+      var st = e("codeIndexStatus");
+      st.className = "note ok";
+      st.textContent = "✓ " + (r.indexed || 0) + " جدید · " + (r.total_files || 0) + " فایل";
+    } catch (err) {
+      var st2 = e("codeIndexStatus");
+      st2.className = "note warn";
+      st2.textContent = "✗ " + err.message;
+    }
+  };
+  if (e("checkSandboxBtn")) e("checkSandboxBtn").onclick = async function() {
+    var note = e("sandboxStatusNote");
+    note.textContent = "بررسی...";
+    try {
+      var s = await sandboxStatus();
+      note.className = "note " + (s.enabled ? "ok" : "warn");
+      note.textContent = "سندباکس: " + (s.enabled ? "فعال" : "غیرفعال") + " · API: " + (s.available ? "✓" : "✗") + " · Worker: " + (s.worker || "—");
+    } catch (err) { note.textContent = "خطا: " + err.message; }
+  };
+  if (e("checkTgBtn")) e("checkTgBtn").onclick = async function() {
+    var note = e("telegramStatusNote");
+    note.textContent = "بررسی...";
+    try {
+      var s = await telegramStatus();
+      note.className = "note " + (s.running ? "ok" : "warn");
+      note.textContent = "بات: " + (s.running ? "در حال اجرا" : "غیرفعال") + " · توکن: " + (s.has_token ? "✓" : "✗") + " · کلید: " + (s.has_key ? "✓" : "✗");
+    } catch (err) { note.textContent = "خطا: " + err.message; }
+  };
+  if (e("restartTgBtn")) e("restartTgBtn").onclick = async function() {
+    try { toast("راه‌اندازی..."); var r = await localFetch("/telegram/restart", {}); if (r.success) toast("راه‌اندازی شد"); else toast("خطا: " + (r.error || "?"), true); }
+    catch (err) { toast(err.message, true); }
+  };
+  if (e("tGrid")) renderTools();
+  var st = e("sStatus");
+  if (st) {
+    if (S.cfg.apiKey && S.cfg.workerUrl) { st.className = "note ok"; st.textContent = "✓ آماده — پروکسی فعال"; }
+    else { st.className = "note warn"; st.textContent = "⚠ Worker و API Key را وارد کنید"; }
+  }
+}
+
+function renderTools() {
+  var grid = $("tGrid"); if (!grid) return;
+  var groups = [
+    { title: "پایه", items: [{ id: "get_current_time", n: "زمان" }, { id: "calculate", n: "محاسبه" }, { id: "web_search", n: "جستجوی وب" }] },
+    { title: "سرور", items: [{ id: "py_execute", n: "پایتون" }, { id: "terminal", n: "ترمینال" }] },
+    { title: "فایل", items: [{ id: "fs_list", n: "لیست" }, { id: "fs_read", n: "خواندن" }, { id: "fs_write", n: "نوشتن" }, { id: "fs_search", n: "جستجو" }, { id: "fs_delete", n: "حذف" }] },
+    { title: "کد", items: [{ id: "code_index", n: "ایندکس" }, { id: "code_symbols", n: "نماد" }, { id: "code_skeleton", n: "اسکلت" }, { id: "code_relevant", n: "مرتبط" }, { id: "code_dependencies", n: "وابستگی" }] },
+    { title: "MCP", items: [{ id: "mcp_list", n: "لیست" }, { id: "mcp_install", n: "نصب" }, { id: "mcp_start", n: "شروع" }, { id: "mcp_health", n: "سلامت" }] },
+    { title: "مدیا", items: [{ id: "deep_research", n: "Deep Research" }, { id: "generate_image", n: "تصویر" }, { id: "text_to_speech", n: "TTS" }] },
+    { title: "سندباکس", items: [{ id: "sandbox_execute", n: "اجرای سندباکس" }] }
+  ];
+  var html = "";
+  groups.forEach(function(g) {
+    html += '<div style="font-size:10px;color:var(--tx3);font-weight:700;margin:6px 0 4px">' + g.title + '</div>';
+    g.items.forEach(function(t) {
+      var on = S.cfg.enabledTools[t.id] ? "on" : "";
+      html += '<div class="titem ' + on + '" data-t="' + t.id + '"><div class="ti"><div class="tn">' + t.n + '</div></div><div class="chk"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div></div>';
+    });
+  });
+  grid.innerHTML = html;
+  grid.querySelectorAll(".titem").forEach(function(el) {
+    el.onclick = function() {
+      var id = el.dataset.t;
+      S.cfg.enabledTools[id] = !S.cfg.enabledTools[id];
+      el.classList.toggle("on", S.cfg.enabledTools[id]);
+      try { localStorage.setItem("gemini-agent-cfg", JSON.stringify(S.cfg)); } catch (ex) {}
+    };
+  });
+}
+
+function deepMerge(target, source) {
+  var out = Object.assign({}, target);
+  Object.keys(source || {}).forEach(function(k) {
+    if (source[k] && typeof source[k] === "object" && !Array.isArray(source[k]) && target[k] && typeof target[k] === "object" && !Array.isArray(target[k])) {
+      out[k] = deepMerge(target[k], source[k]);
+    } else {
+      out[k] = source[k];
+    }
+  });
+  return out;
+}
+
+function saveSettings() {
+  collectCurrentTab();
+  S.debug.enabled = S.cfg.debug !== false;
+  try { localStorage.setItem("gemini-agent-cfg", JSON.stringify(S.cfg)); } catch (e) {}
+  mName.textContent = S.cfg.model;
+  S.pmMode = S.cfg.pmEnabled;
+  $("pmBtn").classList.toggle("active", S.pmMode);
+  if (S.cfg.telegramEnabled && S.cfg.telegramToken) telegramConfig(true, S.cfg.telegramToken, S.cfg.apiKey, S.cfg.model).catch(function() {});
+  else if (!S.cfg.telegramEnabled) telegramConfig(false, null, null, null).catch(function() {});
+  closeSettings(); toast("ذخیره شد"); welcome();
+}
+
+function resetSettings() {
+  if (!confirm("بازگشت به پیش‌فرض؟")) return;
+  S.cfg = JSON.parse(JSON.stringify(DEFAULTS));
+  try { localStorage.setItem("gemini-agent-cfg", JSON.stringify(S.cfg)); } catch (e) {}
+  renderSettingsContent(); toast("بازنشانی");
+}
+
+function updateModes() {
+  $("pmBtn").classList.toggle("active", S.pmMode);
+  $("codeBtn").classList.toggle("active-code", S.codeMode);
+  $("mcpBtn").classList.toggle("active-mcp", S.mcpMode);
+  $("agentBtn").classList.toggle("active-agent", S.agentMode);
+  $("imgBtn").classList.toggle("active-img", S.imgMode);
+  $("sandboxBtn").classList.toggle("active-sandbox", S.sandboxMode);
+  S.cfg.pmEnabled = S.pmMode;
+  var cls = "mem", txt = "آماده";
+  if (S.sandboxMode) { cls = "sandbox"; txt = "سندباکس"; }
+  else if (S.imgMode) { cls = "img"; txt = "مدیا"; }
+  else if (S.agentMode) { cls = "agent"; txt = "Agentic"; }
+  else if (S.mcpMode) { cls = "mcp"; txt = "MCP"; }
+  else if (S.codeMode) { cls = "code"; txt = "کد"; }
+  else if (S.pmMode) { cls = "pm"; txt = "مدیر"; }
+  setConn(true, txt, cls);
+  updateActionBtn();
+}
+
+async function toggleRecording() {
+  if (!S.cfg.sttEnabled) { toast("STT غیرفعال است — از تنظیمات → مدیا فعال کنید", true); return; }
+  if (S._recorder) {
+    try { S._recorder.stop(); } catch (e) {}
+    return;
+  }
+  try {
+    var stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    var mime = "audio/webm";
+    if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+      mime = "audio/webm;codecs=opus";
+    }
+    var recorder = new MediaRecorder(stream, { mimeType: mime });
+    var chunks = [];
+    recorder.ondataavailable = function(ev) { if (ev.data && ev.data.size > 0) chunks.push(ev.data); };
+    recorder.onstop = async function() {
+      try { stream.getTracks().forEach(function(t) { t.stop(); }); } catch (e) {}
+      S._recorder = null;
+      updateActionBtn();
+      if (!chunks.length) { toast("چیزی ضبط نشد", true); return; }
+      var blob = new Blob(chunks, { type: mime });
+      var reader = new FileReader();
+      reader.onload = async function() {
+        try {
+          var base64 = String(reader.result).split(",")[1];
+          toast("در حال تبدیل...");
+          var r = await speechToText(base64, "audio/webm");
+          if (r.text) {
+            inputEl.value = (inputEl.value ? inputEl.value + " " : "") + r.text;
+            resize(); updateActionBtn();
+            toast("متن آماده شد");
+          } else { toast("متنی یافت نشد", true); }
+        } catch (e) { toast("STT: " + e.message, true); }
+      };
+      reader.readAsDataURL(blob);
+    };
+    S._recorder = recorder;
+    recorder.start();
+    updateActionBtn();
+    toast("ضبط... دوباره بزنید تا متوقف شود");
+  } catch (e) {
+    S._recorder = null;
+    updateActionBtn();
+    toast("دسترسی میکروفون رد شد: " + e.message, true);
+  }
+}
+
+function init() {
+  streamEl = $("stream"); inputEl = $("input"); actBtn = $("actBtn");
+  toastEl = $("toast"); mName = $("mName"); conn = $("conn"); connT = $("connT");
+  modal = $("modal"); scrim = $("scrim"); memModal = $("memModal"); memScrim = $("memScrim");
+  codeModal = $("codeModal"); codeScrim = $("codeScrim"); mcpModal = $("mcpModal"); mcpScrim = $("mcpScrim");
+  agentModal = $("agentModal"); agentScrim = $("agentScrim"); imgModal = $("imgModal"); imgScrim = $("imgScrim");
+  dbgModal = $("dbgModal"); dbgScrim = $("dbgScrim"); pysModal = $("pysModal"); pysScrim = $("pysScrim");
+
+  S.mem = new MemoryManager();
+  S.codeIndexer = new CodeIndexer();
+  S.debug = new DebugLogger();
+
+  try {
+    var raw = localStorage.getItem("gemini-agent-cfg");
+    if (raw) {
+      var p = JSON.parse(raw);
+      S.cfg = deepMerge(DEFAULTS, p);
+      // ★ اگر کاربر قبلاً کلید را حذف کرده بود، از DEFAULTS برگردان
+      if (!S.cfg.apiKey) S.cfg.apiKey = DEFAULTS.apiKey;
+      if (!S.cfg.workerUrl) S.cfg.workerUrl = DEFAULTS.workerUrl;
+    }
+  } catch (e) {}
+
+  S.sandboxMode = false;
+  S.pmMode = S.cfg.pmEnabled || false;
+  S.debug.enabled = S.cfg.debug !== false;
+
+  S.mem.loadFromDB().then(function() {
+    updateModes(); welcome(); updateActionBtn();
+    mName.textContent = S.cfg.model;
+    setTimeout(function() { inputEl.focus(); }, 100);
+    if (!S.cfg.apiKey || !S.cfg.workerUrl) {
+      toast("توجه: API Key یا Worker URL خالی است", true);
+    }
+    // ★ چک اتصال Worker در پس‌زمینه
+    setTimeout(function() {
+      fetch(S.cfg.workerUrl.replace(/\/+$/, "") + "/v1beta/models", { method: "GET", headers: getHeaders(), signal: AbortSignal.timeout(8000) })
+        .then(function(r) {
+          if (r.ok || r.status === 404) console.log("[Worker] در دسترس");
+          else console.warn("[Worker] پاسخ " + r.status);
+        })
+        .catch(function() { console.warn("[Worker] در دسترس نیست"); });
+    }, 1500);
+  });
+
+  inputEl.addEventListener("input", function() { resize(); updateActionBtn(); });
+  inputEl.addEventListener("keydown", function(e) {
+    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) {
+      e.preventDefault();
+      if (!S.busy && inputEl.value.trim()) send();
+    }
+  });
+
+  actBtn.addEventListener("click", function() {
+    if (S.busy) { if (S.ctrl) S.ctrl.abort(); return; }
+    if (S._recorder) { toggleRecording(); return; }
+    if (actBtn.classList.contains("mic")) { toggleRecording(); return; }
+    if (inputEl.value.trim()) send();
+  });
+
+  $("setBtn").onclick = openSettings;
+  $("mClose").onclick = closeSettings; scrim.onclick = closeSettings;
+  $("mSave").onclick = saveSettings; $("mReset").onclick = resetSettings;
+  $("memBtn").onclick = openMemModal; $("memClose").onclick = closeMemModal; memScrim.onclick = closeMemModal;
+  $("memClear").onclick = async function() { if (!confirm("پاک کردن LTM؟")) return; await S.mem.clearLTM(); openMemModal(); toast("پاک شد"); };
+  $("codeBtn").onclick = openCodeModal; $("codeClose").onclick = closeCodeModal; codeScrim.onclick = closeCodeModal;
+  $("codeClear").onclick = function() { if (!confirm("پاک کردن ایندکس؟")) return; S.codeIndexer.clear(); openCodeModal(); toast("پاک شد"); };
+  $("mcpBtn").onclick = openMcpModal; $("mcpClose").onclick = closeMcpModal; mcpScrim.onclick = closeMcpModal;
+  $("mcpDiscover").onclick = async function() {
+    try {
+      var d = await localFetch("/mcp/registry", {});
+      toast((Object.keys(d.registry || {}).length) + " در رجیستری");
+      openMcpModal();
+    } catch (e) { toast(e.message, true); }
+  };
+  $("agentBtn").onclick = openAgentModal; $("agentClose").onclick = closeAgentModal; agentScrim.onclick = closeAgentModal;
+  $("agentClear").onclick = function() { S.agentSession = { interactionId: null, environmentId: null, steps: [] }; toast("پاک شد"); openAgentModal(); };
+  $("agentExport").onclick = function() {
+    var blob = new Blob([JSON.stringify(S.agentSession, null, 2)], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a"); a.href = url; a.download = "session.json"; a.click();
+    URL.revokeObjectURL(url);
+  };
+  $("imgBtn").onclick = openImgModal; $("imgClose").onclick = closeImgModal; imgScrim.onclick = closeImgModal;
+  $("imgClear").onclick = function() { S.mediaResults = []; openImgModal(); };
+  $("dbgBtn").onclick = openDbgModal; $("dbgClose").onclick = closeDbgModal; dbgScrim.onclick = closeDbgModal;
+  $("dbgClear").onclick = function() { S.debug.clear(); openDbgModal(); };
+  $("dbgExport").onclick = function() { S.debug.export(); };
+  $("pysBtn").onclick = openPysModal; $("pysClose").onclick = closePysModal; pysScrim.onclick = closePysModal;
+  $("pysDownload").onclick = downloadPythonServer;
+  $("pysCopy").onclick = function() {
+    navigator.clipboard.writeText(S.pythonCode).then(function() { toast("کپی شد"); }).catch(function() { toast("کپی ناموفق", true); });
+  };
+  $("pysReset").onclick = function() { S.pythonCode = PYTHON_SERVER_CODE; $("pysCodeView").textContent = S.pythonCode; toast("بازنشانی"); };
+
+  $("setTabs").querySelectorAll("button").forEach(function(b) {
+    b.onclick = function() {
+      collectCurrentTab();
+      $("setTabs").querySelectorAll("button").forEach(function(x) { x.classList.remove("on"); });
+      b.classList.add("on"); S.setTab = b.dataset.tab; renderSettingsContent();
+    };
+  });
+
+  $("pmBtn").onclick = function() {
+    S.pmMode = !S.pmMode;
+    if (S.pmMode) { S.codeMode = false; S.mcpMode = false; S.agentMode = false; S.imgMode = false; S.sandboxMode = false; }
+    updateModes(); welcome(); inputEl.focus();
+  };
+  $("codeBtn").addEventListener("dblclick", function() {
+    S.codeMode = !S.codeMode;
+    if (S.codeMode) { S.pmMode = false; S.mcpMode = false; S.agentMode = false; S.imgMode = false; S.sandboxMode = false; }
+    updateModes(); welcome(); inputEl.focus();
+  });
+  $("mcpBtn").addEventListener("dblclick", function() {
+    S.mcpMode = !S.mcpMode;
+    if (S.mcpMode) { S.pmMode = false; S.codeMode = false; S.agentMode = false; S.imgMode = false; S.sandboxMode = false; }
+    updateModes(); welcome(); inputEl.focus();
+  });
+  $("agentBtn").addEventListener("dblclick", function() {
+    S.agentMode = !S.agentMode;
+    if (S.agentMode) { S.pmMode = false; S.codeMode = false; S.mcpMode = false; S.imgMode = false; S.sandboxMode = false; }
+    updateModes(); welcome(); inputEl.focus();
+  });
+  $("imgBtn").addEventListener("dblclick", function() {
+    S.imgMode = !S.imgMode;
+    if (S.imgMode) { S.pmMode = false; S.codeMode = false; S.mcpMode = false; S.agentMode = false; S.sandboxMode = false; }
+    updateModes(); welcome(); inputEl.focus();
+  });
+
+  $("sandboxBtn").onclick = function() {
+    if (!S.cfg.sandboxEnabled) {
+      toast("سندباکس غیرفعال است. از تنظیمات فعال کنید.", true);
+      S.setTab = "sandbox";
+      var tabs = document.querySelectorAll("#setTabs button");
+      tabs.forEach(function(x) { x.classList.toggle("on", x.dataset.tab === "sandbox"); });
+      openSettings();
+      return;
+    }
+    S.sandboxMode = !S.sandboxMode;
+    if (S.sandboxMode) { S.pmMode = false; S.codeMode = false; S.mcpMode = false; S.agentMode = false; S.imgMode = false; }
+    updateModes(); welcome(); inputEl.focus();
+  };
+
+  $("uploadBtn").onclick = function() { $("fileUpload").click(); };
+  $("fileUpload").onchange = async function(e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    e.target.value = "";
+    inputEl.value = "[فایل: " + file.name + "] " + inputEl.value;
+    resize();
+    toast("فایل آماده: " + file.name);
+  };
+
+  document.addEventListener("keydown", function(e) {
+    if (e.key === "Escape") {
+      closeSettings(); closeMemModal(); closeCodeModal(); closeMcpModal();
+      closeAgentModal(); closeImgModal(); closeDbgModal(); closePysModal();
+    }
+  });
+}
+
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
+else init();
+</script>
+</body>
+</html>
