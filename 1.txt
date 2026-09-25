@@ -1,0 +1,3032 @@
+برای پروژه‌ای مثل **AudioEngineerAgentPro**، «بهترین حالت ممکن» نباید یک زنجیره‌ی ثابت از EQ → Compressor → Limiter باشد. معماری درست باید یک **سیستم تصمیم‌گیر چندمرحله‌ای** باشد که اول وضعیت صوت را می‌فهمد، بعد کم‌خطرترین مداخله را انتخاب می‌کند، نتیجه را دوباره اندازه‌گیری می‌کند و فقط در صورت بهبود، تغییر را نگه می‌دارد.
+
+## نقشه مادر سیستم
+
+```text
+                           AUDIO INPUT
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │  INGEST / VALIDATOR │
+                    │ format / channels   │
+                    │ sample rate / bits  │
+                    │ corruption / DC     │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                 ┌────────────────────────────┐
+                 │     FORENSIC ANALYZER      │
+                 │ waveform + spectrum        │
+                 │ loudness + dynamics        │
+                 │ phase + stereo             │
+                 │ noise + distortion         │
+                 │ transients + sibilance     │
+                 └────────────┬───────────────┘
+                              │
+                              ▼
+                    ┌────────────────────┐
+                    │ PROBLEM CLASSIFIER │
+                    │ what is wrong?     │
+                    │ severity/confidence │
+                    └──────────┬─────────┘
+                               │
+                               ▼
+                 ┌────────────────────────────┐
+                 │   AI / DSP PLAN ENGINE     │
+                 │ choose modules + order      │
+                 │ calculate parameters        │
+                 │ estimate risk               │
+                 └────────────┬───────────────┘
+                              │
+          ┌───────────────────┼────────────────────┐
+          │                   │                    │
+          ▼                   ▼                    ▼
+   RESTORATION BRANCH   SEPARATION BRANCH    DIRECT ENHANCEMENT
+          │                   │                    │
+          └───────────────────┼────────────────────┘
+                              ▼
+                   ┌─────────────────────┐
+                   │  TONAL ENGINE       │
+                   │ EQ / Dyn EQ / M/S   │
+                   │ resonance / clarity │
+                   └──────────┬──────────┘
+                              ▼
+                   ┌─────────────────────┐
+                   │ DYNAMICS ENGINE     │
+                   │ comp / multiband    │
+                   │ transient / limiter │
+                   └──────────┬──────────┘
+                              ▼
+                   ┌─────────────────────┐
+                   │ SPATIAL ENGINE      │
+                   │ stereo / binaural   │
+                   │ surround / 3D       │
+                   │ object positioning  │
+                   └──────────┬──────────┘
+                              ▼
+                   ┌─────────────────────┐
+                   │ MASTERING ENGINE    │
+                   │ loudness / peak     │
+                   │ color / final glue  │
+                   └──────────┬──────────┘
+                              ▼
+                  ┌────────────────────────┐
+                  │ RE-ANALYSIS / A-B     │
+                  │ compare before/after  │
+                  └────────────┬───────────┘
+                               ▼
+                    ┌───────────────────┐
+                    │ QUALITY GATE / QC │
+                    │ PASS / WARN / FAIL│
+                    └─────────┬─────────┘
+                              ▼
+                       FINAL DELIVERY
+```
+
+---
+
+# 1. هسته‌ای که همه‌چیز روی آن سوار می‌شود
+
+اول از همه یک **Audio Core** لازم داری.
+
+داخل این Core باید یک Audio Buffer استاندارد وجود داشته باشد که تمام ماژول‌ها از همان استفاده کنند:
+
+```text
+AudioBuffer
+ ├── PCM data
+ ├── sample_rate
+ ├── bit_depth
+ ├── channel_count
+ ├── channel_layout
+ ├── duration
+ ├── timestamps
+ ├── peak information
+ └── metadata
+```
+
+برای پردازش داخلی بهتر است مسیر processing غیرمخرب و با headroom کافی طراحی شود؛ خروجی نهایی جداگانه quantize/export شود.
+
+### قانون مهم
+
+اصل فایل هرگز مستقیماً overwrite نشود:
+
+```text
+SOURCE
+  ↓
+Analysis Snapshot
+  ↓
+Processing Graph
+  ↓
+Rendered Version
+  ↓
+QC
+  ↓
+Final
+```
+
+---
+
+# 2. Ingest و Validation
+
+سیستم قبل از هر پردازشی باید بفهمد چه چیزی دریافت کرده.
+
+### تشخیص:
+
+```text
+WAV
+FLAC
+AIFF
+MP3
+AAC
+OGG
+Opus
+...
+```
+
+بعد:
+
+* Sample rate
+* Bit depth
+* Channel count
+* Channel layout
+* Mono/stereo/multichannel
+* Interleaved/planar
+* Duration
+* Corrupt frames
+* Missing samples
+* DC offset
+* Clipping
+* Invalid metadata
+
+### یک نکته مهم
+
+نباید صرفاً چون مثلاً فایل 96 kHz است، نتیجه بگیریم «کیفیت بهتر است». سیستم باید **کیفیت واقعی سیگنال** را اندازه بگیرد، نه فقط مشخصات container را.
+
+---
+
+# 3. Forensic Audio Analyzer
+
+این قسمت مغز تشخیصی سیستم است.
+
+## Waveform Analyzer
+
+اندازه‌گیری:
+
+* Peak
+* True Peak
+* RMS
+* Crest Factor
+* Zero Crossing
+* Silence
+* Transient density
+* Clipping regions
+* DC offset
+
+---
+
+## Spectral Analyzer
+
+حداقل:
+
+```text
+FFT
+STFT
+Mel spectrum
+Constant-Q
+Spectral centroid
+Spectral bandwidth
+Spectral rolloff
+Spectral flatness
+Spectral flux
+Spectral contrast
+```
+
+و مهم‌تر:
+
+### Time-frequency map
+
+چون بسیاری از مشکلات فقط در یک زمان خاص رخ می‌دهند.
+
+مثلاً:
+
+```text
+0:12–0:14 → harshness
+0:31–0:32 → clipping
+1:05       → resonance
+2:11       → dropout
+```
+
+---
+
+# 4. Loudness & Metering
+
+این باید **جزء Engine** باشد، نه یک meter تزئینی.
+
+سیستم باید مواردی مثل:
+
+```text
+LUFS Integrated
+LUFS Short-term
+LUFS Momentary
+LRA
+True Peak
+Sample Peak
+RMS
+```
+
+را محاسبه کند.
+
+ITU-R BS.1770-5 الگوریتم‌های اندازه‌گیری programme loudness و true-peak را مشخص می‌کند و EBU R128 نیز loudness normalization، Loudness Range و Maximum True Peak را تعریف می‌کند. ([ITU][1])
+
+پس:
+
+```text
+Loudness Engine
+     +
+True Peak Engine
+     +
+Delivery Profile
+```
+
+باید یک زیرسیستم واحد باشند.
+
+---
+
+# 5. Problem Detection Engine
+
+اینجاست که سیستم از یک DAW/Plugin عادی جدا می‌شود.
+
+هر مشکل باید با:
+
+```text
+problem
+severity
+confidence
+frequency_region
+time_region
+recommended_action
+risk
+```
+
+ذخیره شود.
+
+مثلاً:
+
+```json
+{
+  "problem": "low_frequency_resonance",
+  "severity": 0.71,
+  "confidence": 0.93,
+  "frequency": 183,
+  "bandwidth": 24,
+  "time_range": [32.1, 48.7],
+  "risk": 0.16
+}
+```
+
+یعنی Agent صرفاً نمی‌گوید:
+
+> صدا بد است.
+
+بلکه می‌گوید:
+
+> Resonance در 183Hz، شدت متوسط، confidence بالا، عمدتاً در 32.1 تا 48.7 ثانیه.
+
+---
+
+# 6. Restore Engine
+
+این بخش باید قبل از «زیباتر کردن» صدا قرار گیرد.
+
+### ماژول‌ها
+
+```text
+De-noise
+De-hum
+De-click
+De-crackle
+De-pop
+De-plosive
+De-wind
+De-rustle
+De-reverb
+De-ess
+De-clip
+Distortion reduction
+Dropout repair
+Spectral repair
+Bandwidth recovery
+```
+
+اما هر ماژول باید **شرط فعال‌شدن** داشته باشد.
+
+مثلاً:
+
+```text
+Noise detected?
+     │
+   yes
+     ↓
+estimate noise floor
+     ↓
+estimate speech/music masking
+     ↓
+calculate safe reduction
+     ↓
+process
+     ↓
+re-analyze
+```
+
+نه:
+
+```text
+always denoise 12 dB
+```
+
+---
+
+# 7. AI Restoration
+
+اینجا می‌توانی ML را وارد کنی.
+
+معماری بهتر:
+
+```text
+Input
+ ↓
+DSP Analysis
+ ↓
+AI Detector
+ ↓
+AI Enhancement Proposal
+ ↓
+DSP/ML Processor
+ ↓
+Artifact Detector
+ ↓
+A/B Evaluation
+```
+
+یعنی AI **پادشاه مطلق پردازش** نیست.
+
+AI پیشنهاد می‌دهد، DSP اجرا می‌کند، QC نتیجه را کنترل می‌کند.
+
+برای Speech، خانواده‌ای از مدل‌های deep filtering وجود دارد؛ DeepFilterNet نمونه‌ای از enhancement مبتنی بر deep filtering است. ([GitHub][2])
+
+---
+
+# 8. Source Separation Engine
+
+برای سیستم سطح بالا باید این شاخه مستقل باشد.
+
+```text
+INPUT
+ ↓
+Separator
+ ├── Vocals
+ ├── Drums
+ ├── Bass
+ ├── Other
+ └── optional stems
+```
+
+بعد:
+
+```text
+Vocals → cleanup
+Bass   → low-end correction
+Drums  → transient processing
+Other  → tonal correction
+```
+
+در پروژه‌های music separation، Demucs v4 از معماری Hybrid Transformer مبتنی بر waveform + spectrogram استفاده می‌کند و برای جداسازی vocals/drums/bass/rest به‌کار می‌رود؛ خود مخزن اصلی Meta اکنون archived است، بنابراین اگر آن را در محصول می‌گذاری باید وضعیت نگهداری و مدل جایگزین را جداگانه مدیریت کنی. ([GitHub][3])
+
+پس Separation نباید وابسته به یک مدل واحد باشد:
+
+```text
+Separation Abstraction Layer
+       │
+       ├── Model A
+       ├── Model B
+       ├── Model C
+       └── Future Model
+```
+
+---
+
+# 9. Tonal Correction Engine
+
+حالا نوبت EQ است.
+
+### Static EQ
+
+برای اصلاحات پایدار.
+
+### Dynamic EQ
+
+برای مشکلاتی مثل:
+
+```text
+resonance
+harshness
+mud
+sibilance
+bass buildup
+```
+
+### Match EQ
+
+مقایسه با reference.
+
+### M/S EQ
+
+برای کنترل جداگانه:
+
+```text
+Mid
+Side
+```
+
+---
+
+# 10. Clarity Engine
+
+یک بخش مستقل بساز.
+
+```text
+Low-end clarity
+Midrange intelligibility
+Presence
+High-frequency air
+Vocal articulation
+Instrument separation
+```
+
+ولی این بخش نباید صرفاً boost کند.
+
+مثلاً:
+
+```text
+Mud ↑
+   ↓
+cut unnecessary low-mid
+
+Presence ↓
+   ↓
+small controlled presence enhancement
+```
+
+---
+
+# 11. Dynamics Engine
+
+باید چند سطح داشته باشد:
+
+```text
+Compressor
+Dynamic Compressor
+Multiband Compressor
+Upward Compression
+Downward Compression
+Expander
+Gate
+Limiter
+Clipper
+Transient Shaper
+Envelope Control
+```
+
+### نکته حیاتی
+
+Limiter نباید مسئول «بلندتر کردن» باشد.
+
+ترتیب منطقی:
+
+```text
+Dynamics repair
+       ↓
+Tone
+       ↓
+Transient control
+       ↓
+Glue
+       ↓
+Peak control
+       ↓
+Final limiter
+```
+
+---
+
+# 12. Psychoacoustic Enhancement
+
+برای حس بهتر صدا:
+
+```text
+Harmonic Exciter
+Saturation
+Tube-style harmonics
+Tape-style harmonics
+Transient enhancement
+Perceived bass
+Air enhancement
+Presence enhancement
+```
+
+اما هرکدام باید distortion budget داشته باشند.
+
+مثلاً:
+
+```text
+harmonic_distortion_budget = X
+```
+
+و QC بررسی کند که enhancement تبدیل به degradation نشده باشد.
+
+---
+
+# 13. Stereo / Phase Engine
+
+این بخش بسیار مهم است.
+
+### اندازه‌گیری:
+
+```text
+Correlation
+Phase
+Stereo width
+Mid/Side energy
+Left/Right imbalance
+Low-end mono compatibility
+```
+
+### اصلاح:
+
+```text
+M/S balance
+Stereo width correction
+Phase rotation
+Channel alignment
+Center extraction
+Low-end centering
+```
+
+نباید اجازه بدهد:
+
+```text
+wide = good
+```
+
+چون width زیاد می‌تواند mono compatibility را خراب کند.
+
+---
+
+# 14. Spatial Engine
+
+حالا سیستم به بخش 3D می‌رسد:
+
+```text
+Stereo
+ ↓
+Binaural
+ ↓
+HRTF
+ ↓
+Surround
+ ↓
+Object-based
+ ↓
+Immersive
+```
+
+### امکانات
+
+* 3D position
+* X/Y/Z
+* Distance
+* Azimuth
+* Elevation
+* Width
+* Depth
+* Height
+* Room simulation
+* Binaural rendering
+* Speaker rendering
+
+---
+
+# 15. Dolby Atmos / Immersive Layer
+
+این بخش باید **جدا از stereo enhancement** طراحی شود.
+
+```text
+Atmos Engine
+ ├── Bed management
+ ├── Object management
+ ├── Object position
+ ├── Trajectory
+ ├── Automation
+ ├── Renderer
+ ├── Binaural preview
+ ├── Speaker preview
+ └── QC
+```
+
+برای Atmos باید delivery target را جداگانه تعریف کنی. Dolby برای Atmos Music مثلاً -18 dB LKFS integrated و حداکثر -1 dBTP را ذکر می‌کند، درحالی‌که برای post-production و podcast اهداف می‌توانند متفاوت باشند؛ بنابراین target باید **profile-based** باشد، نه hard-coded. ([Dolby Professional Support][4])
+
+---
+
+# 16. Mastering Intelligence
+
+Mastering Engine نباید یک preset collection باشد.
+
+باید یک **Mastering Planner** داشته باشی:
+
+```text
+Reference
+     ↓
+Analyze
+     ↓
+Compare
+     ↓
+Determine deficiencies
+     ↓
+Generate candidate chain
+     ↓
+Render candidate
+     ↓
+Re-analyze
+     ↓
+Select only if improved
+```
+
+مثلاً:
+
+```text
+Reference:
+more controlled low end
+slightly clearer vocal
+similar loudness
+less harshness
+```
+
+Agent نباید فقط EQ کپی کند؛ باید **خصوصیت هدف** را استخراج کند.
+
+---
+
+# 17. Reference Matching
+
+سیستم می‌تواند یک reference را بگیرد:
+
+```text
+Reference Track
+       │
+       ▼
+Reference Analyzer
+       │
+       ├── spectral profile
+       ├── loudness profile
+       ├── dynamics
+       ├── stereo
+       ├── low-end distribution
+       └── tonal balance
+```
+
+بعد:
+
+```text
+SOURCE vs REFERENCE
+```
+
+اما باید تفاوت genre/content را در نظر بگیرد.
+
+---
+
+# 18. Adaptive Processing Brain
+
+این مهم‌ترین قسمت کل پروژه است.
+
+### Agent نباید:
+
+```text
+Preset 01
+Preset 02
+Preset 03
+```
+
+### باید:
+
+```text
+ANALYZE
+   ↓
+DIAGNOSE
+   ↓
+PLAN
+   ↓
+SIMULATE
+   ↓
+PROCESS
+   ↓
+VERIFY
+   ↓
+ADJUST
+```
+
+---
+
+# 19. Confidence + Risk System
+
+برای هر تصمیم:
+
+```text
+Confidence
+Risk
+Expected Improvement
+```
+
+مثلاً:
+
+```text
+De-noise
+confidence = 0.96
+risk = 0.14
+expected_gain = 0.62
+```
+
+در نتیجه:
+
+```text
+Expected Value =
+expected_gain - artifact_risk
+```
+
+این باعث می‌شود Agent در صداهایی که اطمینان ندارد **کمتر دستکاری کند**.
+
+---
+
+# 20. Artifact Detection Engine
+
+این بخش را حتماً اضافه کن.
+
+بعد از هر AI/DSP processing:
+
+```text
+Processed
+   ↓
+Artifact Detector
+```
+
+تشخیص:
+
+* Musical noise
+* Phasing
+* Smearing
+* Ringing
+* Over-suppression
+* Transient loss
+* Stereo collapse
+* Excessive brightness
+* Excessive distortion
+* Artificial ambience
+* Separation bleed
+
+اگر artifact افزایش پیدا کرد:
+
+```text
+ROLLBACK
+```
+
+---
+
+# 21. A/B Evaluation Engine
+
+هر تغییر باید قابل مقایسه باشد:
+
+```text
+Original
+Processed
+Processed -3 dB matched
+```
+
+مچ‌کردن loudness مهم است تا سیستم «بلندتر بودن» را با «بهتر بودن» اشتباه نگیرد.
+
+---
+
+# 22. Quality Gate
+
+من این قسمت را به صورت چند دروازه می‌سازم:
+
+```text
+GATE 1 → File integrity
+GATE 2 → Technical audio integrity
+GATE 3 → Loudness
+GATE 4 → True Peak
+GATE 5 → Dynamics
+GATE 6 → Phase
+GATE 7 → Stereo
+GATE 8 → Spectral artifacts
+GATE 9 → AI artifacts
+GATE 10 → Delivery specification
+```
+
+نتیجه:
+
+```text
+PASS
+PASS WITH WARNING
+REPROCESS
+FAIL
+```
+
+---
+
+# 23. Profile System
+
+یک سیستم حرفه‌ای نباید یک خروجی برای همه بسازد.
+
+باید Profile داشته باشد:
+
+```text
+Music
+Mastering
+Streaming
+YouTube
+Podcast
+Voice
+Film
+TV
+Game
+5.1
+7.1
+Immersive
+Dolby Atmos
+Archive
+```
+
+هر Profile:
+
+```text
+loudness target
+true peak limit
+dynamic range policy
+channel layout
+sample-rate policy
+delivery format
+```
+
+دارد.
+
+---
+
+# 24. دو موتور جدا، یک Core مشترک
+
+بهترین معماری:
+
+```text
+                 AUDIO CORE
+                     │
+          ┌──────────┴───────────┐
+          │                      │
+          ▼                      ▼
+   REAL-TIME ENGINE       OFFLINE MASTER ENGINE
+          │                      │
+    low latency             high quality
+    live monitoring         multiple passes
+    streaming               AI heavy models
+```
+
+### Real-Time
+
+برای:
+
+* player
+* microphone
+* live
+* preview
+
+### Offline
+
+برای:
+
+* restoration
+* separation
+* mastering
+* Atmos
+* final export
+
+این دو نباید با یک محدودیت پردازشی مشترک مجبور به یک رفتار شوند.
+
+---
+
+# 25. GPU / CPU تقسیم وظایف
+
+### CPU
+
+```text
+I/O
+routing
+DSP
+meters
+small filters
+control logic
+automation
+```
+
+### GPU
+
+```text
+AI inference
+spectrogram models
+source separation
+deep restoration
+large neural processing
+```
+
+### Queue
+
+```text
+Realtime Queue
+Background Queue
+GPU Queue
+Export Queue
+QC Queue
+```
+
+---
+
+# 26. Processing Graph
+
+نباید زنجیره ثابت باشد.
+
+از:
+
+```text
+Graph
+```
+
+استفاده کن.
+
+مثلاً یک فایل:
+
+```text
+Input
+ ↓
+Dehum
+ ↓
+Declip
+ ↓
+Vocal Separation
+ ├── Vocal
+ │    ↓
+ │  De-ess
+ │    ↓
+ │  EQ
+ │
+ └── Music
+      ↓
+    Low-end correction
+      ↓
+      └──────┐
+             ▼
+           SUM
+             ↓
+       Mastering
+             ↓
+            QC
+```
+
+فایل دیگری شاید اصلاً Separation نخواهد:
+
+```text
+Input
+ ↓
+Analysis
+ ↓
+Dynamic EQ
+ ↓
+Transient
+ ↓
+Master
+ ↓
+QC
+```
+
+---
+
+# 27. نسخه پیشرفته‌تر: Self-Correcting Loop
+
+این همان چیزی است که سیستم را واقعاً حرفه‌ای می‌کند:
+
+```text
+          ┌───────────────┐
+          │   ANALYZE     │
+          └───────┬───────┘
+                  ↓
+          ┌───────────────┐
+          │    PLAN       │
+          └───────┬───────┘
+                  ↓
+          ┌───────────────┐
+          │   PROCESS     │
+          └───────┬───────┘
+                  ↓
+          ┌───────────────┐
+          │   ANALYZE     │
+          │    AGAIN      │
+          └───────┬───────┘
+                  ↓
+          ┌────────────────┐
+          │ BETTER OR WORSE│
+          └───────┬────────┘
+             ┌────┴────┐
+             ↓         ↓
+           BETTER     WORSE
+             ↓         ↓
+           KEEP      ROLLBACK
+```
+
+این حلقه باید حداکثر iteration قابل تنظیم داشته باشد تا processing runaway ایجاد نشود.
+
+---
+
+# 28. Metadata / Knowledge Graph
+
+برای Agent خودت من این را خیلی جدی می‌گیرم:
+
+```text
+Audio Knowledge Graph
+```
+
+رابطه‌ها:
+
+```text
+Problem
+   ↓
+CausedBy
+   ↓
+PossibleFix
+   ↓
+Processor
+   ↓
+Parameter
+   ↓
+Risk
+   ↓
+ExpectedOutcome
+```
+
+مثلاً:
+
+```text
+Harshness
+ ├── possible_region: 2–8kHz
+ ├── possible_causes
+ │    ├── excessive presence
+ │    ├── saturation
+ │    └── sibilance
+ ├── fixes
+ │    ├── dynamic EQ
+ │    ├── de-ess
+ │    └── saturation reduction
+ └── risk
+      └── dullness
+```
+
+این دقیقاً همان چیزی است که بعداً Agent را از یک preset generator جدا می‌کند.
+
+---
+
+# 29. چیزی که نباید انجام بدهی
+
+چند اشتباه معماری خطرناک:
+
+```text
+❌ AI denoise always-on
+❌ fixed EQ preset
+❌ limiter at the end for every file
+❌ normalize everything to one LUFS value
+❌ stereo width always increased
+❌ upsample = quality improvement
+❌ AI model without artifact detection
+❌ overwrite original
+❌ one model for all audio types
+❌ hard-coded Atmos target for every delivery
+```
+
+---
+
+# 30. ساختار نهایی پروژه
+
+برای AudioEngineerAgentPro من ساختار منطقی را تقریباً این‌طور می‌چینم:
+
+```text
+AudioEngineerAgentPro/
+│
+├── core/
+│   ├── audio_buffer
+│   ├── sample_engine
+│   ├── channel_engine
+│   ├── routing
+│   └── timeline
+│
+├── analysis/
+│   ├── waveform
+│   ├── spectrum
+│   ├── loudness
+│   ├── dynamics
+│   ├── phase
+│   ├── stereo
+│   ├── transient
+│   └── artifact_detection
+│
+├── diagnosis/
+│   ├── problem_detector
+│   ├── severity
+│   ├── confidence
+│   ├── causal_graph
+│   └── risk_model
+│
+├── restoration/
+│   ├── denoise
+│   ├── dehum
+│   ├── declip
+│   ├── declick
+│   ├── dereverb
+│   ├── deess
+│   ├── spectral_repair
+│   └── dropout_repair
+│
+├── separation/
+│   ├── vocals
+│   ├── drums
+│   ├── bass
+│   ├── instruments
+│   └── model_router
+│
+├── enhancement/
+│   ├── eq
+│   ├── dynamic_eq
+│   ├── excitation
+│   ├── saturation
+│   ├── transient
+│   └── clarity
+│
+├── dynamics/
+│   ├── compressor
+│   ├── multiband
+│   ├── expander
+│   ├── gate
+│   ├── clipper
+│   └── limiter
+│
+├── spatial/
+│   ├── stereo
+│   ├── ms
+│   ├── phase
+│   ├── binaural
+│   ├── hrtf
+│   ├── surround
+│   └── immersive
+│
+├── atmos/
+│   ├── beds
+│   ├── objects
+│   ├── positions
+│   ├── automation
+│   ├── renderer
+│   └── delivery
+│
+├── mastering/
+│   ├── reference_match
+│   ├── tonal_balance
+│   ├── dynamics
+│   ├── loudness
+│   └── finalizer
+│
+├── ai/
+│   ├── classifier
+│   ├── planner
+│   ├── inference
+│   ├── model_registry
+│   └── model_router
+│
+├── qc/
+│   ├── technical
+│   ├── perceptual
+│   ├── delivery
+│   ├── ab_test
+│   └── certification
+│
+├── profiles/
+│   ├── music
+│   ├── speech
+│   ├── streaming
+│   ├── film
+│   ├── game
+│   └── atmos
+│
+└── orchestration/
+    ├── graph_engine
+    ├── planner
+    ├── scheduler
+    ├── rollback
+    └── job_manager
+```
+
+---
+
+# 31. بهترین ترتیب توسعه
+
+اگر بخواهی واقعاً بسازی، نباید همه چیز را همزمان پیاده کنی.
+
+### فاز A — Foundation
+
+```text
+Audio Core
+Routing
+Buffers
+Metadata
+Analysis
+Meters
+QC
+```
+
+### فاز B — Restoration
+
+```text
+Noise
+Hum
+Click
+Clip
+Reverb
+Spectral Repair
+```
+
+### فاز C — Intelligence
+
+```text
+Problem Detection
+Severity
+Confidence
+Processing Planner
+```
+
+### فاز D — Enhancement
+
+```text
+EQ
+Dynamic EQ
+Dynamics
+Transient
+Saturation
+Stereo
+```
+
+### فاز E — AI
+
+```text
+Neural Restoration
+Separation
+Model Router
+Artifact Detection
+```
+
+### فاز F — Mastering
+
+```text
+Reference
+Loudness
+True Peak
+Finalizer
+Profiles
+```
+
+### فاز G — Spatial
+
+```text
+Binaural
+HRTF
+Surround
+3D
+```
+
+### فاز H — Atmos
+
+```text
+Beds
+Objects
+3D placement
+Rendering
+Delivery
+QC
+```
+
+### فاز I — Certification
+
+```text
+Golden Files
+Regression Tests
+AB Tests
+Stress Tests
+CPU/GPU Tests
+Artifact Tests
+Format Tests
+Delivery Tests
+```
+
+---
+
+# 32. معیار «بهترین» را این‌طور تعریف کن
+
+مهم‌ترین نکته:
+
+```text
+Best Quality ≠ Maximum Processing
+```
+
+بلکه:
+
+```text
+BEST RESULT =
+Problem Reduction
++
+Desired Improvement
++
+Artifact Avoidance
++
+Dynamic Preservation
++
+Phase/Stereo Safety
++
+Delivery Compliance
+```
+
+و برای Agent حتی بهتر:
+
+```text
+Objective Function
+
+maximize:
+    audible_quality_gain
+    clarity
+    intelligibility
+    tonal_balance
+
+minimize:
+    artifacts
+    distortion
+    pumping
+    transient_damage
+    phase_damage
+    overprocessing
+```
+
+---
+
+# 33. نسخه واقعاً حرفه‌ای نهایی
+
+اگر بخواهم تمام نقشه را در یک جمله معماری جمع کنم:
+
+```text
+                 ┌─────────────────────┐
+                 │      AUDIO FILE     │
+                 └──────────┬──────────┘
+                            ↓
+                   [INGEST + VALIDATE]
+                            ↓
+                    [FORENSIC ANALYSIS]
+                            ↓
+                   [PROBLEM DETECTION]
+                            ↓
+                 [CAUSE + CONFIDENCE + RISK]
+                            ↓
+                    [AI/DSP PLANNER]
+                            ↓
+                 [DYNAMIC PROCESS GRAPH]
+                            ↓
+       ┌────────────────────┼────────────────────┐
+       ↓                    ↓                    ↓
+ [RESTORATION]        [SEPARATION]        [ENHANCEMENT]
+       └────────────────────┼────────────────────┘
+                            ↓
+                       [DYNAMICS]
+                            ↓
+                     [SPATIAL / 3D]
+                            ↓
+                    [ATMOS / IMMERSIVE]
+                            ↓
+                      [MASTERING]
+                            ↓
+                  [LOUDNESS / TRUE PEAK]
+                            ↓
+                     [RE-ANALYSIS]
+                            ↓
+                      [A/B + ARTIFACT]
+                            ↓
+                      [AUTO-ROLLBACK]
+                            ↓
+                       [FINAL QC]
+                            ↓
+                       [DELIVERY]
+```
+
+**این معماری را برای نسخه نهایی AudioEngineerAgentPro پیشنهاد می‌کنم:** یک **Hybrid Intelligent Audio Engine** که در آن DSP کلاسیک هسته‌ی دقیق و قابل‌کنترل است، AI برای تشخیص/ترمیم/جداسازی به‌صورت ماژولار وارد می‌شود، و یک لایه‌ی QC مستقل اجازه نمی‌دهد «AI enhancement» صرفاً به خاطر تغییر بیشتر، کیفیت را خراب کند.
+
+برای Atmos هم بهتر است آن را یک extension ساده روی stereo ندانی؛ یک subsistema مستقل با bed/object/rendering/QC باشد. استانداردها و delivery profile نیز باید بیرون از الگوریتم و قابل‌تعویض باشند. ([Dolby Professional Support][4])
+
+اگر این نقشه مبنای ساخت همان **AudioEngineerAgentPro نسخه 6+** باشد، هسته‌ی درست دیگر «مجموعه‌ای از پلاگین‌ها» نیست؛ **یک سیستم عامل پردازش صوت با Diagnostic Engine + Processing Graph + AI Planner + QC/Certification Layer** است.
+
+[1]: https://www.itu.int/rec/R-REC-BS.1770-5-202311-I?utm_source=chatgpt.com "BS.1770 : Algorithms to measure audio programme loudness and true-peak audio level"
+[2]: https://github.com/xiaheyann/DeepFilterNet?utm_source=chatgpt.com "GitHub - xiaheyann/DeepFilterNet: Noise supression using deep filtering · GitHub"
+[3]: https://github.com/facebookresearch/demucs?utm_source=chatgpt.com "GitHub - facebookresearch/demucs: Code for the paper Hybrid Spectrogram and Waveform Source Separation · GitHub"
+[4]: https://professionalsupport.dolby.com/s/article/Measuring-the-Loudness-of-a-Dolby-Atmos-Mix?utm_source=chatgpt.com "Measuring the Loudness of a Dolby Atmos Mix"
+دقیقاً؛ برای یک سیستم حرفه‌ای، بخش **«جلوگیری از خراب‌تر شدن صدا»** تقریباً به اندازه‌ی بخش Enhancement مهم است. مهم‌ترین قانون این است:
+
+> **سیستم حق ندارد صرفاً چون می‌تواند چیزی را پردازش کند، آن را پردازش کند.**
+
+این کنترل‌ها را باید به‌صورت **Quality Safety Layer** بالای تمام ماژول‌ها قرار بدهی:
+
+### 1. اصل کمترین مداخله
+
+هر پردازش باید فقط به اندازه‌ای باشد که مشکل را برطرف کند.
+
+```text
+Problem severity
+      ↓
+Minimum required processing
+      ↓
+Re-analysis
+```
+
+نه اینکه مثلاً هر فایل را 6dB EQ یا 10dB denoise کند.
+
+### 2. جلوگیری از Overprocessing
+
+برای هر ماژول سقف داشته باش:
+
+```text
+max EQ gain
+max compression
+max denoise
+max saturation
+max stereo widening
+max limiter reduction
+max declipping
+```
+
+این سقف‌ها باید وابسته به نوع صوت باشند؛ Voice، Music و Film رفتار یکسان ندارند.
+
+### 3. حفظ Transient
+
+پردازش شدید می‌تواند ضربه‌های Kick، Snare، Percussion و Attack سازها را له کند.
+
+بعد از هر پردازش:
+
+```text
+Transient before
+      ↓
+Transient after
+      ↓
+Difference
+```
+
+اگر transient بیش از حد افت کرد، مقدار پردازش کاهش پیدا کند.
+
+### 4. جلوگیری از «بلندتر = بهتر»
+
+سیستم نباید خروجی بلندتر را با خروجی بهتر اشتباه بگیرد.
+
+A/B باید **loudness matched** باشد؛ وگرنه ممکن است نسخه‌ی پرحجم‌تر به‌اشتباه بهتر ارزیابی شود.
+
+### 5. حفظ Dynamic Range
+
+Compression و limiting نباید دائماً برای رسیدن به صدای پرقدرت استفاده شوند.
+
+کنترل کن:
+
+```text
+LUFS
+LRA
+Crest Factor
+Peak-to-Loudness
+Gain Reduction
+```
+
+اگر Dynamics بیش از حد فشرده شد:
+
+```text
+WARNING → reduce processing
+```
+
+### 6. True Peak و Inter-sample Peak
+
+بعد از limiter یا saturation فقط Sample Peak کافی نیست.
+
+حتماً:
+
+```text
+True Peak
+```
+
+کنترل شود، مخصوصاً قبل از export/encoding.
+
+استاندارد ITU-R BS.1770 برای loudness و true-peak measurement مبناست.
+
+### 7. جلوگیری از Clipping زنجیره‌ای
+
+هر مرحله ممکن است level را افزایش دهد:
+
+```text
+EQ +3 dB
+↓
+Exciter
+↓
+Compressor makeup
+↓
+Saturation
+```
+
+بنابراین بین مراحل headroom داشته باش و بعد از هر node متر داشته باش.
+
+### 8. جلوگیری از EQ بیش از حد
+
+مخصوصاً:
+
+```text
+Bass boost
+High boost
+Presence boost
+```
+
+سیستم باید ابتدا attenuation یا correction را بررسی کند و فقط وقتی لازم است boost بدهد.
+
+همچنین چند EQ پشت سر هم نباید مجموعاً پاسخ فرکانسی افراطی ایجاد کنند.
+
+### 9. جلوگیری از مصنوعی‌شدن صدا
+
+AI restoration می‌تواند مشکلاتی ایجاد کند:
+
+```text
+Musical noise
+Metallic artifacts
+Phasing
+Smearing
+Over-suppression
+Artificial high frequencies
+```
+
+بنابراین هر AI module باید یک:
+
+```text
+Artifact Detector
+```
+
+بعد از خودش داشته باشد.
+
+### 10. Denoise بیش از حد ممنوع
+
+یکی از خطرناک‌ترین موارد:
+
+```text
+Noise ↓↓↓
+Detail ↓↓↓
+Texture ↓↓↓
+```
+
+هدف نباید «سکوت مطلق پس‌زمینه» باشد؛ هدف **کاهش نویز بدون نابودی اطلاعات مفید** است.
+
+### 11. De-reverb احتیاطی
+
+اگر بیش از حد استفاده شود:
+
+```text
+Room information ↓
+Naturalness ↓
+Voice texture ↓
+```
+
+بنابراین سیستم باید مقدار ambience باقی‌مانده را نیز پایش کند.
+
+### 12. De-clip محافظه‌کارانه
+
+قسمت‌هایی که واقعاً قابل بازسازی نیستند نباید با اعتماد کاذب «اختراع» شوند.
+
+```text
+Recovered information
+      ≠
+Guaranteed original information
+```
+
+Confidence پایین → processing محدود.
+
+### 13. Phase Safety
+
+هر Stereo/Width/M/S/AI processing باید بعدش بررسی کند:
+
+```text
+Correlation
+Phase coherence
+Mono compatibility
+Low-frequency phase
+```
+
+اگر Mono collapse رخ داد، widening باید خودکار کاهش یابد.
+
+### 14. Low-End Protection
+
+در بسیاری از سیستم‌ها بیشترین آسیب از low-end می‌آید.
+
+باید کنترل شود:
+
+```text
+Sub-bass buildup
+Kick/Bass masking
+Excessive stereo low-end
+DC/ultra-low energy
+```
+
+Low frequencies خصوصاً در stereo enhancement باید محافظه‌کارانه رفتار کنند.
+
+### 15. Sibilance Protection
+
+De-esser نباید فقط «S» را حذف کند و باعث صدای lisp یا dull شدن شود.
+
+مقایسه:
+
+```text
+Sibilance reduction
+vs
+High-frequency intelligibility
+```
+
+### 16. Saturation Safety
+
+Saturation باید یک **distortion budget** داشته باشد.
+
+```text
+harmonics added
+THD-like indicators
+high-frequency buildup
+peak increase
+```
+
+اگر harmonics بیش از حد شد، rollback.
+
+### 17. جلوگیری از پردازش تکراری
+
+خیلی مهم:
+
+```text
+De-ess
+↓
+Dynamic EQ
+↓
+AI Voice Enhance
+```
+
+ممکن است هر سه یک مشکل را هدف گرفته باشند.
+
+Agent باید بفهمد:
+
+```text
+Already corrected?
+→ don't process again
+```
+
+### 18. جلوگیری از حلقه‌ی خودتخریبی
+
+مثلاً:
+
+```text
+Bass boost
+↓
+Limiter reacts
+↓
+Compression
+↓
+Bass perceived lower
+↓
+Bass boost again
+↓
+...
+```
+
+Processing graph باید cycle detection و iteration limit داشته باشد.
+
+### 19. Original همیشه محفوظ
+
+هر مرحله:
+
+```text
+Original
+Version 1
+Version 2
+Version 3
+```
+
+قابل برگشت باشد.
+
+**هیچ پردازشی irreversible نباشد، مگر در مرحله‌ی export نهایی.**
+
+### 20. Reference برای جلوگیری از سلیقه‌ای شدن
+
+سیستم نباید فرض کند:
+
+```text
+more bass = better
+more treble = better
+wider = better
+louder = better
+```
+
+Reference و target profile باید مشخص کنند هدف چیست.
+
+### 21. Genre/Content Awareness
+
+پارامتر واحد برای همه خطرناک است.
+
+```text
+Speech ≠ Rock ≠ Classical ≠ EDM ≠ Film
+```
+
+سیستم باید Content Class داشته باشد.
+
+### 22. هر تصمیم Confidence داشته باشد
+
+مثلاً:
+
+```text
+Problem detected:
+Harshness
+
+confidence = 0.61
+```
+
+در این حالت سیستم نباید یک EQ شدید اعمال کند.
+
+```text
+High confidence → stronger correction
+Low confidence  → conservative correction
+```
+
+### 23. «عدم پردازش» یک نتیجه معتبر باشد
+
+این یکی را حتماً داخل Agent قرار بده:
+
+```text
+ANALYZE
+↓
+No significant problem
+↓
+DO NOTHING
+```
+
+این ویژگی واقعاً حرفه‌ای است.
+
+### 24. بعد از هر تغییر دوباره اندازه بگیرد
+
+اصل طلایی:
+
+```text
+BEFORE
+   ↓
+PROCESS
+   ↓
+AFTER
+   ↓
+COMPARE
+```
+
+اگر:
+
+```text
+quality_gain < artifact_cost
+```
+
+باید تغییر رد شود.
+
+---
+
+# مهم‌ترین Safety Rules در یک هسته
+
+می‌توانی این منطق را به‌عنوان **Master Quality Guard** تعریف کنی:
+
+```text
+MASTER QUALITY GUARD
+
+1. Never modify without detected reason.
+2. Use minimum effective processing.
+3. Preserve original audio.
+4. Loudness-match A/B comparisons.
+5. Monitor true peak.
+6. Protect transient information.
+7. Protect dynamics.
+8. Protect phase and mono compatibility.
+9. Protect low-end.
+10. Detect AI artifacts.
+11. Prevent repeated correction of the same problem.
+12. Detect processing loops.
+13. Apply per-module safety limits.
+14. Re-analyze after every significant process.
+15. Roll back when quality decreases.
+16. Prefer "DO NOTHING" over uncertain processing.
+17. Never confuse louder with better.
+18. Never invent information when confidence is low.
+19. Keep all processing non-destructive.
+20. Final output must pass QC before delivery.
+```
+
+و از همه مهم‌تر این فرمول را برای Agent بگذار:
+
+```text
+PROCESS ONLY WHEN:
+
+Expected Quality Improvement
+>
+Artifact Risk + Information Loss Risk
+```
+
+و حتی بهتر:
+
+```text
+IF confidence < threshold:
+    reduce processing
+
+IF artifact_risk > threshold:
+    rollback
+
+IF quality_after < quality_before:
+    rollback
+
+IF no meaningful improvement:
+    keep original
+```
+
+این باعث می‌شود سیستم به‌جای اینکه همیشه صدا را «دستکاری» کند، واقعاً **Quality Enhancement** انجام دهد.
+بله؛ چند نکته‌ی نهایی مهم هست که اگر از همین ابتدا داخل معماری بگذاری، سیستم از یک **Audio Enhancer معمولی** به یک موتور حرفه‌ای و قابل‌اعتماد نزدیک‌تر می‌شود.
+
+## توصیه‌های نهایی من
+
+### 1. «اصلاح» را از «زیباتر کردن» جدا کن
+
+دو حالت مستقل داشته باش:
+
+```text
+RESTORE
+رفع خرابی واقعی
+Noise / Clip / Hum / Click / Reverb / Dropout
+
+ENHANCE
+بهبود هدفمند
+Clarity / Tone / Punch / Width / Air / Depth
+```
+
+اول خرابی را اصلاح کن، بعد Enhancement.
+
+---
+
+### 2. همیشه یک حالت `Preserve` داشته باش
+
+سه حالت عملی بهتر است:
+
+```text
+SAFE       محافظه‌کار
+BALANCED   حرفه‌ای و متعادل
+AGGRESSIVE تهاجمی
+```
+
+حالت پیش‌فرض باید **Balanced** باشد، نه Aggressive.
+
+---
+
+### 3. برای هر پردازش «بودجه تغییر» تعریف کن
+
+سیستم باید بداند چقدر اجازه دارد از صدای اصلی فاصله بگیرد.
+
+مثلاً:
+
+```text
+Processing Budget
+├── Spectral change
+├── Dynamic change
+├── Stereo change
+├── Harmonic change
+└── Noise reduction
+```
+
+هرچه از بودجه عبور کرد، سیستم وارد Warning یا Rollback شود.
+
+---
+
+### 4. چند پاسه بودن را اجباری کن
+
+برای پردازش‌های سنگین:
+
+```text
+PASS 1 → Conservative
+PASS 2 → Re-analyze
+PASS 3 → Fine correction
+PASS 4 → Final QC
+```
+
+یک پردازش عظیم در یک پاس معمولاً کنترل‌پذیری کمتری دارد.
+
+---
+
+### 5. دو خروجی تولید کن
+
+همیشه:
+
+```text
+FINAL
+SAFE BACKUP / NEUTRAL VERSION
+```
+
+تا اگر کاربر نتیجه‌ی خیلی پردازش‌شده را دوست نداشت، نسخه‌ی نزدیک‌تر به منبع داشته باشد.
+
+---
+
+### 6. Target را قبل از Processing مشخص کن
+
+Agent نباید بدون هدف کار کند.
+
+مثلاً:
+
+```text
+Target:
+"clean vocal"
+"natural mastering"
+"powerful music"
+"broadcast-safe"
+"immersive"
+```
+
+بعد Processing Plan ساخته شود.
+
+---
+
+### 7. «Naturalness» را یک معیار مستقل قرار بده
+
+فقط عددهای DSP کافی نیستند.
+
+یک لایه‌ی Naturalness Monitoring داشته باش:
+
+```text
+Naturalness
+├── timbre stability
+├── transient integrity
+├── ambience continuity
+├── harmonic realism
+└── spatial consistency
+```
+
+خصوصاً برای AI Restoration بسیار مهم است.
+
+---
+
+### 8. از یک الگوریتم برای همه‌ی فایل‌ها استفاده نکن
+
+**Model Router** بساز:
+
+```text
+Speech       → Speech model
+Music        → Music model
+Noisy        → Restoration model
+Damaged      → Repair model
+Stems        → Separation model
+Atmos        → Spatial model
+```
+
+حتی در یک فایل ممکن است قسمت‌های مختلف به پردازش متفاوت نیاز داشته باشند.
+
+---
+
+### 9. Processing را Segment-aware کن
+
+کل فایل لزوماً یک مشکل ندارد.
+
+بهتر:
+
+```text
+Track
+ ├── Segment A → clean
+ ├── Segment B → noisy
+ ├── Segment C → clipped
+ └── Segment D → clean
+```
+
+بنابراین فقط Segment B و C پردازش شوند.
+
+این یکی از بهترین روش‌ها برای جلوگیری از overprocessing است.
+
+---
+
+### 10. AI را مجبور کن دلیل هر تغییر را ثبت کند
+
+برای هر تصمیم:
+
+```text
+WHY
+WHAT
+HOW MUCH
+RISK
+RESULT
+```
+
+مثلاً:
+
+```text
+WHY:
+excessive 4.8 kHz resonance
+
+WHAT:
+dynamic EQ
+
+HOW MUCH:
+-2.1 dB
+
+RISK:
+low
+
+RESULT:
+resonance reduced
+```
+
+این برای Debug، اعتماد و توسعه‌ی بعدی فوق‌العاده مهم است.
+
+---
+
+### 11. Explainability داخلی داشته باش
+
+نه اینکه فقط:
+
+> Enhancement Complete
+
+بلکه:
+
+```text
+Detected: 7 issues
+Corrected: 5
+Ignored: 2
+Reason: confidence too low
+Artifact risk: low
+Overall change: conservative
+```
+
+---
+
+### 12. Human Override را از ابتدا طراحی کن
+
+کاربر باید بتواند بگوید:
+
+```text
+Keep natural
+More bass
+Less compression
+Don't touch vocals
+Preserve dynamics
+Keep original stereo
+```
+
+و Agent این محدودیت‌ها را به **Constraints** تبدیل کند.
+
+---
+
+### 13. Constraint Engine داشته باش
+
+این خیلی مهم است:
+
+```text
+USER CONSTRAINTS
+       ↓
+PROCESSING PLANNER
+       ↓
+ALLOWED OPERATIONS
+```
+
+مثلاً:
+
+```text
+Preserve dynamics = true
+Max compression = 2 dB GR
+Max stereo width = +10%
+Voice untouched = true
+```
+
+---
+
+### 14. Quality Score را با یک عدد خلاصه نکن
+
+امتیاز کلی به‌تنهایی گمراه‌کننده است.
+
+بهتر:
+
+```text
+Technical        94
+Restoration      91
+Tonal            88
+Dynamics         96
+Stereo           93
+Naturalness      90
+Artifacts        98
+Delivery         100
+```
+
+این‌ها **گزارش داخلی** باشند، نه «رتبه‌بندی کیفیت مطلق».
+
+---
+
+### 15. Golden Test Library بساز
+
+این برای نسخه نهایی بسیار مهم است.
+
+مجموعه‌ای از فایل‌های تست:
+
+```text
+Clean
+Noisy
+Clipped
+Hum
+Reverberant
+Overcompressed
+Harsh
+Weak bass
+Bad stereo
+Phase problems
+Voice
+Music
+Film
+5.1
+Immersive
+Atmos workflows
+```
+
+بعد هر تغییر در Engine روی همه‌ی آنها تست شود.
+
+---
+
+### 16. Regression Testing اجباری
+
+ممکن است یک نسخه De-noise بهتر شود ولی Stereo خراب شود.
+
+پس:
+
+```text
+New build
+   ↓
+100+ golden tests
+   ↓
+Compare with previous build
+   ↓
+Detect regression
+```
+
+هیچ ماژول جدیدی نباید بدون این تست وارد نسخه پایدار شود.
+
+---
+
+### 17. کیفیت را در چند سطح بسنج
+
+من سه سطح می‌گذارم:
+
+```text
+LEVEL 1
+Technical integrity
+
+LEVEL 2
+Signal quality
+
+LEVEL 3
+Perceptual / production quality
+```
+
+چون یک فایل ممکن است از نظر فنی سالم ولی از نظر شنیداری بد باشد.
+
+---
+
+### 18. Export نباید بخشی از Processing Engine باشد
+
+این دو را جدا نگه دار:
+
+```text
+PROCESSING MASTER
+        ↓
+DELIVERY ENGINE
+```
+
+Delivery تعیین می‌کند:
+
+```text
+sample rate
+bit depth
+format
+codec
+channel layout
+loudness target
+peak target
+metadata
+```
+
+---
+
+### 19. Internal Master را بالاترین کیفیت نگه دار
+
+همیشه:
+
+```text
+SOURCE
+ ↓
+INTERNAL MASTER
+ ↓
+DELIVERY COPIES
+ ├── WAV
+ ├── FLAC
+ ├── AAC
+ ├── MP3
+ ├── Stereo
+ ├── 5.1
+ └── Immersive
+```
+
+بهتر است از Master نهایی یک‌بار برای هر Delivery خروجی بگیری، نه اینکه خروجی فشرده را دوباره پردازش کنی.
+
+---
+
+### 20. پردازش فشرده‌شده را تا حد ممکن کم کن
+
+مثلاً:
+
+```text
+MP3
+ ↓
+Enhance
+ ↓
+MP3
+ ↓
+Enhance
+ ↓
+MP3
+```
+
+طراحی سیستم باید اجازه دهد Processing اصلی روی بهترین منبع موجود انجام شود و encoding در انتهای زنجیره باشد.
+
+---
+
+### 21. Ultra-low و Ultra-high را هم کنترل کن
+
+سیستم نباید تمام انرژی خارج از محدوده‌ی مفید را بی‌دلیل تقویت کند.
+
+ولی حذف کورکورانه هم ممنوع:
+
+```text
+Detect
+→ evaluate
+→ decide
+```
+
+نه:
+
+```text
+always high-pass
+always low-pass
+```
+
+---
+
+### 22. Reference را مرجع بدان، نه Template
+
+Reference matching نباید باعث شود هر فایل شبیه یک آهنگ دیگر شود.
+
+هدف:
+
+```text
+Reference → target characteristics
+```
+
+نه:
+
+```text
+Reference → copy exact spectrum
+```
+
+---
+
+### 23. برای هر ماژول یک `Bypass Truth Test` داشته باش
+
+هر Processor باید بتواند ثابت کند که وقتی bypass است، واقعاً هیچ تغییری ایجاد نمی‌کند.
+
+برای جلوگیری از Bugهای پنهان بسیار مهم است.
+
+---
+
+### 24. Deterministic Mode اضافه کن
+
+برای تست و Certification:
+
+```text
+same input
++
+same settings
+=
+same output
+```
+
+در مدل‌های AI اگر nondeterministic هستند، حالت کنترل‌شده‌ی تست داشته باش.
+
+---
+
+### 25. مصرف CPU/GPU را فدای کیفیت نکن
+
+دو چیز جدا:
+
+```text
+QUALITY MODE
+PERFORMANCE MODE
+```
+
+و حتی:
+
+```text
+Preview
+Standard
+High Quality
+Maximum Quality
+```
+
+Maximum Quality می‌تواند چندپاسه و AI-heavy باشد.
+
+---
+
+# مهم‌ترین توصیه از همه
+
+به نظرم این جمله باید در **Core Policy** پروژه حک شود:
+
+```text
+THE SYSTEM MUST NEVER MODIFY AUDIO
+SIMPLY BECAUSE A PROCESSOR IS AVAILABLE.
+
+EVERY CHANGE MUST HAVE:
+1. A DETECTED REASON
+2. A MEASURABLE GOAL
+3. A CONTROLLED AMOUNT
+4. A RISK ESTIMATE
+5. A POST-PROCESS ANALYSIS
+6. A ROLLBACK PATH
+```
+
+و یک قانون حتی مهم‌تر:
+
+```text
+NO IMPROVEMENT
+        ↓
+DO NOT PROCESS
+
+UNCERTAIN IMPROVEMENT
+        ↓
+PROCESS CONSERVATIVELY
+
+CLEAR IMPROVEMENT
+        ↓
+KEEP
+
+QUALITY DEGRADATION
+        ↓
+ROLLBACK
+```
+
+### اگر بخواهم فقط 10 اصل نهایی را برای نسخه حرفه‌ای قفل کنم:
+
+```text
+01. Minimum effective processing
+02. Original always preserved
+03. Analyze before processing
+04. Re-analyze after processing
+05. Loudness-matched A/B
+06. Artifact detection after AI/DSP
+07. Confidence + Risk for every decision
+08. Rollback on degradation
+09. "Do Nothing" is a valid result
+10. Final QC before every delivery
+```
+
+این ده مورد از اضافه کردن ده‌ها افکت جدید مهم‌ترند. چون **سیستم حرفه‌ای فقط بلد نیست چه کاری انجام دهد؛ بلد است چه زمانی هیچ کاری نکند.**
+دقیقاً می‌شود یک **تیک واحد** ساخت که همه‌ی این پردازش‌ها را هوشمندانه با هم فعال کند. چیزی که دنبالش هستی در عمل باید حس **«میکروفن نزدیک، صدای تمیز، گرم، پرجزئیات و چسبیده به شنونده»** ایجاد کند؛ نه اینکه صرفاً Bass و Treble را زیاد کند.
+
+## اسم پیشنهادی تیک
+
+### 🎙️ `Premium Podcast — Intimate Studio Voice`
+
+با فعال شدن این گزینه، سیستم این زنجیره را **خودکار و تطبیقی** اجرا کند:
+
+```text
+VOICE INPUT
+   ↓
+Analysis
+   ↓
+Noise / Room Detection
+   ↓
+Voice Isolation
+   ↓
+Proximity / Body Control
+   ↓
+Tonal Correction
+   ↓
+Presence / Intelligibility
+   ↓
+De-esser
+   ↓
+Smooth Compression
+   ↓
+Harmonic Warmth
+   ↓
+Micro Dynamics
+   ↓
+Peak Control
+   ↓
+Final Voice Polish
+```
+
+---
+
+# دقیقاً چه تغییراتی بدهد؟
+
+## 1. Noise Reduction — خیلی تمیز، ولی نامحسوس
+
+هدف:
+
+```text
+Background Noise ↓
+Room Noise ↓
+Fan/Hiss ↓
+Electrical Noise ↓
+```
+
+اما:
+
+```text
+Voice Detail ≠ ↓
+Breath Naturalness ≠ ↓
+Consonants ≠ ↓
+```
+
+### رفتار پیشنهادی
+
+سیستم ابتدا Noise Floor را اندازه بگیرد و فقط به اندازه‌ی لازم کم کند.
+
+تقریباً:
+
+```text
+Light:     3–6 dB
+Moderate:  6–10 dB
+Heavy:    10–14 dB
+```
+
+بیشتر از این فقط وقتی AI confidence بسیار بالا است.
+
+---
+
+# 2. De-Reverb — یکی از کلیدهای اصلی
+
+صدای پادکست گران‌قیمت معمولاً حس اتاق زیاد ندارد.
+
+پس:
+
+```text
+Room Reflection ↓
+Early Reflection ↓
+Tail ↓
+```
+
+اما نباید صدای گوینده خشک و مصنوعی شود.
+
+هدف:
+
+```text
+Roomy Voice
+     ↓
+Controlled Room
+     ↓
+Intimate Voice
+```
+
+---
+
+# 3. Proximity / Body Engine
+
+این همان قسمتی است که حس «میکروفن نزدیک» را می‌سازد.
+
+ولی نباید کورکورانه Bass Boost کنیم.
+
+سیستم تشخیص دهد آیا صدای منبع واقعاً thin است یا already دارای proximity effect.
+
+### اگر Voice نازک است:
+
+تقریباً:
+
+```text
+70–120 Hz  → controlled body
+120–250 Hz → warmth
+```
+
+### اگر Mud ایجاد شد:
+
+```text
+180–350 Hz
+↓
+Dynamic reduction
+```
+
+نتیجه:
+
+```text
+Thin
+ ↓
+Full
+ ↓
+Warm
+ ↓
+Clean
+```
+
+---
+
+# 4. Low-Mid Mud Control
+
+برای اینکه صدای نزدیک تبدیل به «خفه و گل‌آلود» نشود:
+
+```text
+200–400 Hz
+```
+
+به صورت Dynamic EQ بررسی شود.
+
+نه EQ ثابت روی همه‌ی صداها.
+
+---
+
+# 5. Presence Engine
+
+برای همان حس:
+
+> «صدا کنار گوشم است»
+
+منطقه‌ی مهم معمولاً:
+
+```text
+1.5–4.5 kHz
+```
+
+اما سیستم باید **intelligibility** را بیشتر کند، نه اینکه صدای تیز بسازد.
+
+تقریباً:
+
+```text
+Presence:
++0.5 تا +2 dB
+```
+
+با Dynamic EQ و وابسته به محتوای صدا.
+
+---
+
+# 6. Air
+
+برای حس میکروفن خوب:
+
+```text
+8–16 kHz
+```
+
+می‌تواند مقدار خیلی کمی Air اضافه شود.
+
+ولی:
+
+```text
+Air ≠ Treble Boost
+```
+
+هدف باید:
+
+```text
+Open
+Detailed
+Expensive
+```
+
+باشد، نه:
+
+```text
+Bright
+Harsh
+Sibilant
+```
+
+---
+
+# 7. De-Esser
+
+این مرحله **بعد از Presence/Air** اهمیت بیشتری پیدا می‌کند.
+
+کنترل:
+
+```text
+S
+SH
+T
+CH
+```
+
+و به صورت تطبیقی.
+
+مثلاً:
+
+```text
+Typical reduction:
+2–5 dB
+```
+
+نه De-ess دائمی و سنگین.
+
+---
+
+# 8. Compression
+
+این قسمت خیلی مهم است.
+
+صدای Podcast حرفه‌ای معمولاً:
+
+```text
+Very quiet words
+        ↓
+Too loud words
+```
+
+ندارد.
+
+ولی نباید صدای رادیویی له‌شده هم بسازد.
+
+### پیشنهادی:
+
+```text
+Ratio:        2:1 – 4:1
+Attack:       medium
+Release:      program-dependent
+Gain Reduction:
+              typically 2–6 dB
+```
+
+سیستم باید بر اساس Voice Dynamics تنظیم کند.
+
+---
+
+# 9. Micro-Dynamics
+
+بعد از Compression می‌توان کمی consistency ایجاد کرد:
+
+```text
+Quiet syllables
+↓
+slightly lifted
+
+Strong syllables
+↓
+controlled
+```
+
+ولی نباید Breaths و طبیعی‌بودن حذف شوند.
+
+---
+
+# 10. Harmonic Warmth
+
+این قسمت می‌تواند همان حس:
+
+> «میکروفن/پری‌امپ خوب»
+
+را ایجاد کند.
+
+نه با EQ، بلکه با مقدار خیلی کمی harmonic enhancement:
+
+```text
+Saturation
+Tube-like harmonic coloration
+Subtle Exciter
+```
+
+شدت:
+
+```text
+VERY LOW
+```
+
+مثلاً یک preset حرفه‌ای بهتر است به جای:
+
+```text
+Saturation = 30%
+```
+
+با یک **perceptual target** کار کند:
+
+```text
+Add warmth
+without audible distortion
+```
+
+---
+
+# 11. Transient Control
+
+برای Podcast نباید صدای حروف:
+
+```text
+P
+T
+K
+B
+D
+```
+
+خشن یا تیز شوند.
+
+سیستم باید Attack را کنترل کند، نه نابود.
+
+---
+
+# 12. Breath Control
+
+یک سیستم سطح بالا بهتر است Breaths را:
+
+```text
+Detect
+Classify
+Control
+```
+
+کند.
+
+نه اینکه کامل حذفشان کند.
+
+مثلاً:
+
+```text
+Natural breath = keep
+Loud breath     = reduce
+Noisy breath    = clean
+```
+
+---
+
+# 13. Plosive Control
+
+برای:
+
+```text
+P
+B
+POP
+```
+
+یک ماژول adaptive low-frequency suppression:
+
+```text
+60–150 Hz
+```
+
+فعال شود.
+
+این کار مخصوصاً برای صدای نزدیک به میکروفن مهم است.
+
+---
+
+# 14. Mono / Center Lock
+
+برای Podcast Voice:
+
+```text
+Voice
+ ↓
+Center
+```
+
+بهتر است پیش‌فرض باشد.
+
+نباید Stereo Widener صدا را مصنوعی پخش کند.
+
+اما می‌توان برای خروجی‌های خاص ambience بسیار ضعیفی اضافه کرد.
+
+### پیش‌فرض:
+
+```text
+Voice = Centered
+Low-end = Mono compatible
+```
+
+---
+
+# 15. Tiny Space Layer — اختیاری و خیلی کم
+
+اگر صدای اصلی بیش از حد خشک باشد، به جای Reverb معمولی:
+
+```text
+Micro Ambience
+```
+
+اضافه شود.
+
+خیلی کم:
+
+```text
+5–10%
+```
+
+یا حتی کمتر، بسته به منبع.
+
+هدف:
+
+```text
+Dry
+ ↓
+Natural
+```
+
+نه:
+
+```text
+Dry
+ ↓
+Roomy
+```
+
+---
+
+# 16. Final Limiter
+
+فقط برای Peak control.
+
+نه برای له‌کردن صدا.
+
+```text
+True Peak protection
++
+gentle final leveling
+```
+
+اگر Limiter مجبور شد دائماً شدید کار کند، Agent باید برگردد و **Compression/Dynamics stage** را اصلاح کند.
+
+---
+
+# 17. Loudness Matching
+
+در پایان، Target را بر اساس Profile انتخاب کن، نه یک عدد ثابت برای تمام محتوا.
+
+مثلاً:
+
+```text
+Podcast Profile
+      ↓
+Loudness Target
+      ↓
+True Peak Ceiling
+```
+
+و قبل/بعد را loudness-match کن تا سیستم اشتباهاً «بلندتر» را «بهتر» تلقی نکند.
+
+---
+
+# حالا کل تیک چه کاری انجام دهد؟
+
+### وقتی خاموش است:
+
+```text
+Raw Voice
+```
+
+### وقتی روشن می‌کنی:
+
+```text
+🎙️ PREMIUM PODCAST
+        ↓
+Analyze Voice
+        ↓
+Remove only necessary noise
+        ↓
+Reduce room
+        ↓
+Control proximity / mud
+        ↓
+Add controlled body
+        ↓
+Add presence
+        ↓
+Add subtle air
+        ↓
+Control sibilance
+        ↓
+Smooth dynamics
+        ↓
+Subtle harmonic polish
+        ↓
+Protect transients
+        ↓
+Protect breaths
+        ↓
+Peak control
+        ↓
+Loudness normalization
+        ↓
+QC
+```
+
+---
+
+# اما یک نکته بسیار مهم
+
+این تیک **نباید همیشه تمام این مراحل را اجرا کند**.
+
+بلکه باید این‌طور باشد:
+
+```text
+Premium Podcast
+       ↓
+      ANALYZE
+       ↓
+┌───────────────────────┐
+│ آیا Noise دارد؟       │ → Yes → Noise module
+│ آیا Room دارد؟        │ → Yes → De-reverb
+│ آیا Thin است؟         │ → Yes → Body
+│ آیا Mud دارد؟         │ → Yes → Dynamic EQ
+│ آیا Dark است؟         │ → Yes → Presence/Air
+│ آیا Sibilant است؟     │ → Yes → De-esser
+│ آیا Dynamic است؟      │ → Yes → Compressor
+│ آیا Harsh است؟        │ → Yes → correction
+└───────────────────────┘
+       ↓
+     FINAL QC
+```
+
+یعنی ممکن است یک Voice عالی فقط این را دریافت کند:
+
+```text
+De-esser
++
+2 dB Compression
++
+Tiny EQ
++
+Limiter
+```
+
+و بقیه **اصلاً روشن نشوند**.
+
+این مهم‌ترین چیزی است که باید در این Preset بگذاری؛ وگرنه یک دکمه‌ی «Premium» تبدیل می‌شود به دکمه‌ی **Overprocessing**.
+
+---
+
+# نتیجه‌ای که باید هدف بگیرد
+
+نه:
+
+> صدای خیلی باس‌دار و خیلی روشن
+
+بلکه:
+
+```text
+Close
+Warm
+Clear
+Dense
+Detailed
+Controlled
+Natural
+Low-noise
+Low-room
+Stable
+Intimate
+Professional
+```
+
+و حس شنیداری:
+
+```text
+            LISTENER
+               ↓
+        ┌──────────────┐
+        │    VOICE     │
+        │              │
+        │  "very close"│
+        └──────────────┘
+```
+
+یعنی شنونده احساس کند گوینده **نزدیک و مستقیم جلوی او** صحبت می‌کند، بدون اینکه سیستم ادعا کند واقعاً اطلاعات یک میکروفن گران‌قیمت را می‌تواند از هیچ تولید کند.
+
+### من برای این قابلیت سه زیرحالت هم می‌گذارم:
+
+```text
+🎙️ Premium Podcast
+      ├── Natural
+      ├── Intimate
+      └── Broadcast
+```
+
+**Intimate** همان حالتی است که دقیقاً به چیزی که گفتی نزدیک‌تر است: صدای گرم، نزدیک، واضح و «چسبیده به شنونده» با حداقل نشانه‌ی اتاق و بدون پردازش اغراق‌آمیز.
